@@ -9,11 +9,15 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.rslakra.microservice</groupId>
+    <!-- retail-suite -->
+    <groupId>com.rslakra.retailsuite</groupId>
     <artifactId>retail-suite</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>${revision}</version>
+    <!--    <packaging>jar</packaging>-->
     <packaging>pom</packaging>
-    <name>RetailSuite Microservice</name>
+    <name>${project.artifactId}</name>
+
+    <description>The ${project.artifactId} Library</description>
 
     <modules>
         <module>store-service</module>
@@ -72,6 +76,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <scope>provided</scope>
             <!--            <optional>true</optional>-->
         </dependency>
         <dependency>
