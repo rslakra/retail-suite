@@ -17,7 +17,7 @@
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
 
-    <description>The ${project.artifactId} Library</description>
+    <description>The ${project.artifactId} Microservice</description>
 
     <modules>
         <module>store-service</module>
