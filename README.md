@@ -37,7 +37,7 @@ cd customer-service && ./runMaven.sh
 cd store-service && ./runMaven.sh
 
 # Terminal 3 - UI Service
-cd web-apps-ui && mvn spring-boot:run
+cd web-apps-ui && ./runMaven.sh
 ```
 
 **Access UI:** `http://localhost:9900`
@@ -61,6 +61,12 @@ For detailed information about each service, see their respective README files:
   - REST API endpoints including geospatial search
   - MongoDB configuration
   - Geospatial query documentation
+
+- **[Web Apps UI](web-apps-ui/README.md)** - Gateway and frontend service
+  - Build, run, test instructions
+  - Gateway routes configuration
+  - Frontend structure and development
+  - Static resources management
 
 ### Infrastructure Services
 
@@ -107,8 +113,8 @@ For detailed information about each service, see their respective README files:
 - **web-apps-ui**:
   - Spring WebFlux
   - Spring Cloud Gateway
-  - Eureka Client
-  - AngularJS frontend
+  - Eureka Client (optional)
+  - AngularJS frontend (pre-built static resources)
 
 ### Service Communication
 
@@ -121,7 +127,8 @@ For detailed information about each service, see their respective README files:
 - **web-apps-ui** → **customer-service** & **store-service**
   - Routes: `/customers/**` → customer-service
   - Routes: `/stores/**` → store-service
-  - Load balancing via Eureka (if available)
+  - Uses direct URLs by default (no Eureka required)
+  - Can use Eureka for service discovery (optional)
 
 ---
 
@@ -164,6 +171,7 @@ mvn clean install
 See individual service READMEs for detailed build instructions:
 - [Customer Service Build](customer-service/README.md#build)
 - [Store Service Build](store-service/README.md#build)
+- [Web Apps UI Build](web-apps-ui/README.md#build)
 
 ---
 
@@ -175,6 +183,7 @@ Each service can be run independently. See detailed instructions:
 
 - [Customer Service Run](customer-service/README.md#run)
 - [Store Service Run](store-service/README.md#run)
+- [Web Apps UI Run](web-apps-ui/README.md#run)
 
 ### Running All Services
 
@@ -190,7 +199,7 @@ cd store-service && ./runMaven.sh
 
 **Terminal 3 - UI Service:**
 ```bash
-cd web-apps-ui && mvn spring-boot:run
+cd web-apps-ui && ./runMaven.sh
 ```
 
 ---
@@ -228,6 +237,7 @@ cd store-service && mvn test
 See individual service READMEs for test details:
 - [Customer Service Tests](customer-service/README.md#test)
 - [Store Service Tests](store-service/README.md#test)
+- [Web Apps UI Tests](web-apps-ui/README.md#test)
 
 ---
 
@@ -264,6 +274,7 @@ Each service has a Dockerfile in `src/main/docker/`:
 See individual service READMEs for Docker details:
 - [Customer Service Docker](customer-service/README.md#docker)
 - [Store Service Docker](store-service/README.md#docker)
+- [Web Apps UI Docker](web-apps-ui/README.md#docker)
 
 ---
 
@@ -286,9 +297,10 @@ See individual service READMEs for Docker details:
    - Check circuit breaker status: `http://localhost:9000/actuator/circuitbreakers`
    - See [Customer Service Integration](customer-service/README.md#service-integration)
 
-5. **OS Specific Info**
-  Netty already includes osx-x86_64 (Intel). If you're on Apple Silicon (M1/M2/M3), we need osx-aarch_64. Updating the dependency to support both architectures:
-  - uname -m
+5. **Netty DNS Resolver Warning (macOS)**
+   - If you see Netty DNS resolver warnings on macOS, the web-apps-ui includes the native resolver dependency
+   - The warning is non-critical and doesn't affect functionality
+   - See [Web Apps UI README](web-apps-ui/README.md) for details
 
 For detailed troubleshooting, see individual service READMEs.
 
@@ -305,7 +317,7 @@ For detailed troubleshooting, see individual service READMEs.
 - [ ] Build project: `mvn clean install` (from root)
 - [ ] Start customer-service: `cd customer-service && ./runMaven.sh`
 - [ ] Start store-service: `cd store-service && ./runMaven.sh`
-- [ ] Start web-apps-ui: `cd web-apps-ui && mvn spring-boot:run`
+- [ ] Start web-apps-ui: `cd web-apps-ui && ./runMaven.sh`
 - [ ] Access UI at: `http://localhost:9900`
 
 ---
@@ -323,6 +335,9 @@ retail-suite/
 │   ├── buildMaven.sh     # Build script
 │   └── runMaven.sh       # Run script
 ├── web-apps-ui/          # UI service
+│   ├── README.md         # Detailed web-apps-ui documentation
+│   ├── buildMaven.sh     # Build script
+│   └── runMaven.sh       # Run script
 ├── rabbitmq/             # RabbitMQ infrastructure
 │   ├── README.md         # RabbitMQ documentation
 │   ├── startRabbitMQServer.sh
@@ -344,6 +359,8 @@ retail-suite/
 - Services can run without Eureka, but service discovery features won't work
 - MongoDB is required only for store-service
 - RabbitMQ is required for Spring Cloud Bus functionality
+- Web-apps-ui uses direct URLs for backend services by default (no Eureka required)
+- Frontend is pre-built and served as static resources from `src/main/resources/static/`
 
 ---
 
@@ -351,5 +368,9 @@ retail-suite/
 
 - [Customer Service README](customer-service/README.md)
 - [Store Service README](store-service/README.md)
+- [Web Apps UI README](web-apps-ui/README.md)
 - [RabbitMQ README](rabbitmq/README.md)
 - [MongoDB README](mongodb/README.md)
+
+# Author
+- Rohtash Lakra

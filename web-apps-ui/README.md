@@ -146,11 +146,11 @@ mvn test
 
 The service uses Spring Cloud Gateway to route requests to backend services:
 
-| Route | Backend Service | Description |
-|-------|----------------|-------------|
-| `/stores/**` | store-service | Routes to store-service |
-| `/customers/**` | customer-service | Routes to customer-service |
-| `/` | Static | Redirects to `/index.html#/customers` |
+| Route           | Backend Service  | Description                           |
+|-----------------|------------------|---------------------------------------|
+| `/stores/**`    | store-service    | Routes to store-service               |
+| `/customers/**` | customer-service | Routes to customer-service            |
+| `/`             | Static           | Redirects to `/index.html#/customers` |
 
 ### Service Discovery
 
@@ -282,22 +282,175 @@ lsof -i :9900
 
 ---
 
+## Project Structure
+
+### Frontend Files Organization
+
+The web-apps-ui has two sets of frontend files:
+
+1. **Source Files** (`app/` directory):
+   - **Purpose**: Original AngularJS source code for development
+   - **Contains**: 
+     - `app/scripts/` - JavaScript source files
+     - `app/styles/` - CSS/LESS source files
+     - `app/views/` - HTML templates
+     - `app/index.html` - Main HTML file
+   - **Required for**: Frontend development and modifications
+   - **Not required for**: Running the service (only needed if you want to modify the frontend)
+
+2. **Built/Static Files** (`src/main/resources/static/` directory):
+   - **Purpose**: Compiled, minified, and optimized frontend files served by Spring Boot
+   - **Contains**: Pre-built JavaScript, CSS, HTML, images, fonts
+   - **Required for**: Running the service (Spring Boot serves these files)
+   - **Generated from**: `app/` directory using build tools
+
+### Build Tools and Configuration Files
+
+The following files are used for frontend development and building:
+
+| File                         | Purpose                                              | Required for Running?                 |
+|------------------------------|------------------------------------------------------|---------------------------------------|
+| `package.json`               | NPM dependencies (Grunt, build tools)                | No - only for frontend development    |
+| `bower.json`                 | Frontend library dependencies (AngularJS, Bootstrap) | No - only for frontend development    |
+| `Gruntfile.js`               | Grunt build configuration                            | No - only for frontend development    |
+| `.bowerrc`                   | Bower configuration                                  | No - only for frontend development    |
+| `.jshintrc`                  | JavaScript linting rules                             | No - only for frontend development    |
+| `.travis.yml`                | Old CI/CD configuration (deprecated)                 | No - can be removed                   |
+| `app/` directory             | Frontend source code                                 | No - only for frontend development    |
+| `src/main/resources/static/` | Built frontend files                                 | **Yes** - required for service to run |
+
+### Summary
+
+- **To run the service**: Only `src/main/resources/static/` is needed (already present)
+- **To modify the frontend**: You need `app/`, `package.json`, `bower.json`, `Gruntfile.js`, and Node.js/NPM/Bower
+
+---
+
 ## Development
 
 ### Frontend Development
 
-The frontend is a pre-built AngularJS application. If you need to modify the frontend:
+The frontend is a pre-built AngularJS application. The service runs using the built files in `src/main/resources/static/`. 
 
-1. **Original source** (if available): Check `app/` directory
-2. **Build tools**: Grunt, Bower, NPM (see original README notes below)
-3. **Built files**: Located in `src/main/resources/static/`
+**If you need to modify the frontend:**
 
-**Note**: The original README mentioned using Grunt/Bower for frontend development, but the service now uses pre-built static resources. For frontend changes, you may need to:
-- Install Node.js and NPM
-- Install Bower: `npm install -g bower`
-- Install dependencies: `npm install && bower install`
-- Build: `grunt build`
-- Copy built files to `src/main/resources/static/`
+1. **Prerequisites**:
+   - Node.js (v0.10+ or newer)
+   - NPM (comes with Node.js)
+   - Bower: `npm install -g bower`
+
+2. **Install Dependencies**:
+   ```bash
+   cd web-apps-ui
+   npm install
+   bower install
+   ```
+
+3. **Build Process**:
+   ```bash
+   # Development build (with source maps, no minification)
+   grunt serve
+   
+   # Production build (minified, optimized)
+   grunt build
+   ```
+   This builds from `app/` to `dist/` directory.
+
+4. **Copy to Static Resources**:
+   After building, copy the contents of `dist/` to `src/main/resources/static/`:
+   ```bash
+   cp -r dist/* src/main/resources/static/
+   ```
+
+5. **Rebuild Spring Boot Service**:
+   ```bash
+   ./buildMaven.sh
+   ```
+
+### Frontend Dependencies
+
+**Current Versions** (from `bower.json`):
+- AngularJS: 1.2.16 (very old - consider upgrading)
+- Bootstrap: 3.2.0 (old - consider upgrading)
+- Angular UI Router: 0.2.10
+- Angular Google Maps: 1.2.0
+
+**Upgrading Frontend Dependencies**:
+
+1. **Update `bower.json`**:
+   ```json
+   {
+     "dependencies": {
+       "angular": "1.8.x",  // Upgrade from 1.2.16
+       "bootstrap": "3.4.x",  // Upgrade from 3.2.0
+       ...
+     }
+   }
+   ```
+
+2. **Update Dependencies**:
+   ```bash
+   bower update
+   ```
+
+3. **Test and Fix Breaking Changes**:
+   - AngularJS 1.2 → 1.8 has breaking changes
+   - Test thoroughly after upgrading
+   - Update code if needed
+
+4. **Rebuild**:
+   ```bash
+   grunt build
+   cp -r dist/* src/main/resources/static/
+   ```
+
+**Note**: The current frontend dependencies are very old (from 2014). Consider:
+- Upgrading to modern AngularJS (1.8.x) or migrating to Angular (2+)
+- Upgrading Bootstrap to 3.4.x or 4.x/5.x
+- Testing thoroughly after upgrades
+
+### Build Tool Dependencies
+
+**Current Versions** (from `package.json`):
+- Grunt: ^0.4.1 (very old)
+- Node.js: >=0.10.0 (very old requirement)
+
+**Upgrading Build Tools**:
+
+1. **Update `package.json`**:
+   ```json
+   {
+     "devDependencies": {
+       "grunt": "^1.6.0",  // Upgrade from 0.4.1
+       ...
+     },
+     "engines": {
+       "node": ">=14.0.0"  // Upgrade from 0.10.0
+     }
+   }
+   ```
+
+2. **Update Dependencies**:
+   ```bash
+   npm update
+   ```
+
+3. **Test Build**:
+   ```bash
+   grunt build
+   ```
+
+**Note**: Grunt 0.4 → 1.6 has significant breaking changes. You may need to update `Gruntfile.js` syntax.
+
+### Removing Unused Files
+
+If you're not planning to modify the frontend, you can optionally remove:
+- `app/` directory (source files)
+- `package.json`, `bower.json`, `Gruntfile.js` (build tools)
+- `.bowerrc`, `.jshintrc`, `.travis.yml` (config files)
+- `test/` directory (if present)
+
+**However**, it's recommended to keep them for future reference and potential frontend updates.
 
 ---
 
