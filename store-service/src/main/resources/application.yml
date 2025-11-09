@@ -1,24 +1,30 @@
 server:
   port: 8081
 
-management:
-  security:
-    enabled: false
-
-endpoints:
-  restart:
-    enabled: true
-  shutdown:
-    enabled: true
-  health:
-    sensitive: false
-
 spring:
+  application:
+    name: store-service
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URI:http://user:password@localhost:8888}
   data:
     mongodb:
       uri: ${vcap.services.${PREFIX:}mongodb.credentials.uri:mongodb://${MONGODB_HOST:localhost}:${MONGODB_PORT:27017}/stores}
   rabbitmq:
     addresses: ${vcap.services.${PREFIX:}rabbitmq.credentials.uri:amqp://${RABBITMQ_HOST:localhost}:${RABBITMQ_PORT:5672}}
+  cloud:
+    compatibility-verifier:
+      enabled: false
+
+management:
+  security:
+    enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
 
 eureka:
   instance:

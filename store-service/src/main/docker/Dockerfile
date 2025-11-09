@@ -1,4 +1,4 @@
-FROM java:7
+FROM java:21
 VOLUME /tmp
 ADD retail-suite-store-service-1.0.1.BUILD-SNAPSHOT.jar /app.jar
 RUN bash -c 'touch /app.jar'

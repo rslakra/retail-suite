@@ -1,8 +1,9 @@
 spring:
   application:
-    name: retail-suite-store-service
+    name: customer-service
   cloud:
     config:
       uri: ${CONFIG_SERVER_URI:${vcap.services.${PREFIX:}configserver.credentials.uri:http://user:password@localhost:8888}}
+      enabled: false
 encrypt:
   failOnError: false

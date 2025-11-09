@@ -15,21 +15,16 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document
 public class Store {
 
-	private final @Id String id;
-	private final String name;
-	private final Address address;
+	private @Id String id;
+	private String name;
+	private Address address;
 
 	public Store(String name, Address address) {
-
 		this.name = name;
 		this.address = address;
-		this.id = null;
 	}
 
 	protected Store() {
-
-		this.id = null;
-		this.name = null;
-		this.address = null;
+		// Default constructor for Spring Data
 	}
 }

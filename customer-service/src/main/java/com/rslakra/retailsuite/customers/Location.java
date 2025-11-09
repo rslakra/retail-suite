@@ -1,7 +1,7 @@
 
 package com.rslakra.retailsuite.customers;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;

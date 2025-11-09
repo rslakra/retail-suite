@@ -1,42 +1,53 @@
 server:
   port: 9900
-logging:
-  level:
-    com.netflix.discovery: 'OFF'
-    com.netflix.zuul: 'OFF'
-eureka:
-  instance:
-    leaseRenewalIntervalInSeconds: 10
-  client:
-    registryFetchIntervalSeconds: 5
-
-hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds: 60000
-ribbon:
-  ServerListRefreshInterval: 5000
-  ConnectTimeout: 3000
-  ReadTimeout: 60000
 
 spring:
+  application:
+    name: retail-suite-ui
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URI:http://user:password@localhost:8888}
   cloud:
+    compatibility-verifier:
+      enabled: false
     gateway:
       routes:
         - id: stores
-          uri: lb://stores
+          uri: ${STORE_SERVICE_URI:http://localhost:8081}
           predicates:
             - Path=/stores/**
         - id: customers
-          uri: lb://customers
+          uri: ${CUSTOMER_SERVICE_URI:http://localhost:9000}
           predicates:
-          - Path=/customers/**
+            - Path=/customers/**
         - id: root
           uri: no://op
           predicates:
-          - Path=/
+            - Path=/
           filters:
-          - RedirectTo=302, /index.html#/customers
+            - RedirectTo=302, /index.html#/customers
+    loadbalancer:
+      ribbon:
+        enabled: false
+
+logging:
+  level:
+    com.netflix.discovery: 'OFF'
+
+eureka:
+  instance:
+    leaseRenewalIntervalInSeconds: 10
+    metadataMap:
+      instanceId: ${vcap.application.instance_id:${spring.application.name}:${spring.application.instance_id:${server.port}}}
+  client:
+    registryFetchIntervalSeconds: 5
 
 management:
+  security:
+    enabled: false
   endpoints:
     web:
       exposure:
-        include: '*'
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

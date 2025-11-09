@@ -20,7 +20,7 @@ import org.springframework.hateoas.client.Traverson;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 
 /**
  * @author Rohtash Lakra
@@ -37,7 +37,7 @@ public class StoreIntegration {
 	@Setter
 	private String uri = "http://localhost:8081/stores";
 
-	@HystrixCommand(fallbackMethod = "defaultLink")
+	@CircuitBreaker(name = "storeIntegration", fallbackMethod = "defaultLink")
 	public Link getStoresByLocationLink(Map<String, Object> parameters, String host) {
 		URI storesUri = URI.create(uri);
 
@@ -69,7 +69,7 @@ public class StoreIntegration {
 		}
 		log.info("Found stores-by-location link pointing to {}.", href);
 
-		return new Link(href, link.getRel());
+		return Link.of(href, link.getRel());
 	}
 
 	private String reconstructURI(String host, String href) {
