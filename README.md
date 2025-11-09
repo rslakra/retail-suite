@@ -286,6 +286,10 @@ See individual service READMEs for Docker details:
    - Check circuit breaker status: `http://localhost:9000/actuator/circuitbreakers`
    - See [Customer Service Integration](customer-service/README.md#service-integration)
 
+5. **OS Specific Info**
+  Netty already includes osx-x86_64 (Intel). If you're on Apple Silicon (M1/M2/M3), we need osx-aarch_64. Updating the dependency to support both architectures:
+  - uname -m
+
 For detailed troubleshooting, see individual service READMEs.
 
 ---
