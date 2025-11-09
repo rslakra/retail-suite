@@ -1,5 +1,5 @@
 #!/bin/sh
 # Author: Rohtash Lakra
 echo
-spring run app.groovy
+mvn spring-boot:run
 echo

@@ -8,12 +8,12 @@ import org.springframework.stereotype.Controller;
 @EnableDiscoveryClient
 @SpringBootApplication
 @Controller
-public class UiServiceApplication {
+public class WebAppsServiceApplication {
 
     /**
      * @param args
      */
     public static void main(String[] args) {
-        new SpringApplication(UiServiceApplication.class).run(args);
+        new SpringApplication(WebAppsServiceApplication.class).run(args);
     }
 }

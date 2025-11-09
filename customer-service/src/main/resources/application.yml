@@ -1,22 +1,32 @@
 server:
   port: 9000
 
+spring:
+  application:
+    name: customer-service
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URI:http://user:password@localhost:8888}
+  rabbitmq:
+    addresses: ${vcap.services.${PREFIX:}rabbitmq.credentials.uri:amqp://${RABBITMQ_HOST:localhost}:${RABBITMQ_PORT:5672}}
+  cloud:
+    compatibility-verifier:
+      enabled: false
+
 management:
   security:
     enabled: false
-
-endpoints:
-  restart:
-    enabled: true
-  shutdown:
-    enabled: true
-  health:
-    sensitive: false
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
 
 integration:
   stores:
     uri: http://localhost:8081
-    test: '{cipher}316f8cdbb776c23e679bf209014788a6eab7522f48f97114328c2c9388e6b3c1'
+    # test: '{cipher}316f8cdbb776c23e679bf209014788a6eab7522f48f97114328c2c9388e6b3c1'
 
 stores:
   ribbon:
@@ -33,16 +43,19 @@ eureka:
     availabilityZones: 
       default: ${APPLICATION_DOMAIN:${DOMAIN:defaultZone}}
 
-# For demo only allow more hystrix connections
-hystrix:
-  stream:
-    maxConcurrentConnections: 20
-    bus:
-      enabled: true
-
-spring:
-  rabbitmq:
-    addresses: ${vcap.services.${PREFIX:}rabbitmq.credentials.uri:amqp://${RABBITMQ_HOST:localhost}:${RABBITMQ_PORT:5672}}
+# Resilience4j Circuit Breaker configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      storeIntegration:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
 
 logging:
   level:
@@ -50,12 +63,14 @@ logging:
 
 ---
 spring:
-  profiles: mysql
+  config:
+    activate:
+      on-profile: mysql
   datasource:
-    url: jdbc:mysql://localhost/test
+    url: jdbc:mysql://localhost/customers
     username: root
     password:
-    driver-class-name: com.mysql.jdbc.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: create-drop
