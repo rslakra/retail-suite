@@ -313,6 +313,7 @@ The following files are used for frontend development and building:
 | `package.json`               | NPM dependencies (Grunt, build tools)                | No - only for frontend development    |
 | `bower.json`                 | Frontend library dependencies (AngularJS, Bootstrap) | No - only for frontend development    |
 | `Gruntfile.js`               | Grunt build configuration                            | No - only for frontend development    |
+| `buildFrontend.sh`            | Script to build frontend from app/ to static/        | No - only for frontend development    |
 | `.bowerrc`                   | Bower configuration                                  | No - only for frontend development    |
 | `.jshintrc`                  | JavaScript linting rules                             | No - only for frontend development    |
 | `.travis.yml`                | Old CI/CD configuration (deprecated)                 | No - can be removed                   |
@@ -328,44 +329,179 @@ The following files are used for frontend development and building:
 
 ## Development
 
+### Building the Frontend
+
+**Quick Start - Build Frontend:**
+```bash
+cd web-apps-ui
+./buildFrontend.sh
+./buildMaven.sh  # Rebuild Spring Boot service
+```
+
+This single command handles everything: installing dependencies, building, and copying files.
+
+---
+
 ### Frontend Development
 
 The frontend is a pre-built AngularJS application. The service runs using the built files in `src/main/resources/static/`. 
 
 **If you need to modify the frontend:**
 
+#### Quick Build (Recommended)
+
+Use the provided build script:
+
+```bash
+cd web-apps-ui
+./buildFrontend.sh
+```
+
+This script automatically:
+1. **Checks prerequisites**: Node.js, NPM, Bower, Grunt CLI (installs missing tools)
+2. **Installs NPM dependencies**: Uses `--legacy-peer-deps` for compatibility with old packages
+3. **Installs Bower dependencies**: Frontend libraries (AngularJS, Bootstrap, etc.)
+4. **Installs missing imagemin dependencies**: Required for image optimization
+5. **Applies Node.js compatibility fixes**: For Node.js 12+ (graceful-fs fix)
+6. **Builds frontend using Grunt**: Runs `grunt build --force` (continues despite non-critical errors)
+7. **Backs up existing static files**: Creates timestamped backup before overwriting
+8. **Copies built files**: From `dist/` to `src/main/resources/static/`
+9. **Copies bower_components**: Needed for unprocessed build blocks in HTML
+10. **Copies source scripts**: Individual JS files (app.js, routes.js, controllers)
+11. **Compiles LESS to CSS**: Converts LESS files to CSS
+12. **Copies fonts**: To `styles/app/fonts/` (CSS references them with relative paths)
+13. **Copies images**: To `styles/app/images/` (CSS references them with relative paths)
+14. **Cleans up backup folders**: Removes old backups after successful build
+
+After building, rebuild the Spring Boot service:
+```bash
+./buildMaven.sh
+```
+
+**Note**: The script handles Node.js compatibility issues automatically. Some non-critical errors (cdnify, grunt-karma) may appear but are ignored with the `--force` flag.
+
+**⚠️ Node.js Version Compatibility:**
+
+The script automatically handles Node.js compatibility:
+- **Node.js 14-16**: Works best, no compatibility issues
+- **Node.js 18+**: Script applies workarounds automatically (graceful-fs fix)
+- **Node.js 12-13**: Works with compatibility fixes
+- **Node.js < 12**: May have issues, upgrade recommended
+
+The build script will:
+- Warn you if using Node.js 18+
+- Automatically install compatibility fixes
+- Continue building despite non-critical errors (uses `--force` flag)
+
+**For best results with Node.js 18+:**
+```bash
+# Install nvm (Node Version Manager)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+# Install and use Node.js 16
+nvm install 16
+nvm use 16
+
+# Then run the build
+./buildFrontend.sh
+```
+
+#### Manual Build Steps
+
+If you prefer to build manually (not recommended - use `buildFrontend.sh` instead):
+
 1. **Prerequisites**:
-   - Node.js (v0.10+ or newer)
-   - NPM (comes with Node.js)
-   - Bower: `npm install -g bower`
+   ```bash
+   # Install Node.js (if not installed)
+   # Download from https://nodejs.org/ or use:
+   brew install node  # macOS
+   
+   # Install Bower globally
+   npm install -g bower
+   
+   # Install Grunt CLI globally
+   npm install -g grunt-cli
+   ```
 
 2. **Install Dependencies**:
    ```bash
    cd web-apps-ui
-   npm install
+   npm install --legacy-peer-deps  # Use --legacy-peer-deps for compatibility
    bower install
    ```
 
-3. **Build Process**:
+3. **Install Missing Dependencies**:
    ```bash
-   # Development build (with source maps, no minification)
-   grunt serve
+   # Install imagemin dependencies
+   npm install imagemin-gifsicle imagemin-jpegtran imagemin-optipng imagemin-svgo --save-dev --legacy-peer-deps
    
-   # Production build (minified, optimized)
-   grunt build
+   # Install Node.js compatibility fix (for Node.js 12+)
+   npm install graceful-fs@latest --save-dev --legacy-peer-deps
+   ```
+
+4. **Build the Frontend**:
+   ```bash
+   # Production build (minified, optimized) - Recommended
+   grunt build --force  # Use --force to continue despite non-critical errors
    ```
    This builds from `app/` to `dist/` directory.
 
-4. **Copy to Static Resources**:
-   After building, copy the contents of `dist/` to `src/main/resources/static/`:
+5. **Copy to Static Resources**:
    ```bash
+   # Backup existing files (optional)
+   cp -r src/main/resources/static src/main/resources/static.backup.$(date +%Y%m%d_%H%M%S)
+   
+   # Remove old static files
+   rm -rf src/main/resources/static/*
+   
+   # Copy built files
    cp -r dist/* src/main/resources/static/
+   
+   # Copy bower_components (needed for unprocessed build blocks)
+   cp -r bower_components src/main/resources/static/
+   
+   # Copy source scripts
+   mkdir -p src/main/resources/static/scripts/controllers
+   cp app/scripts/*.js src/main/resources/static/scripts/
+   cp -r app/scripts/controllers/*.js src/main/resources/static/scripts/controllers/
+   
+   # Compile LESS to CSS
+   grunt less:server
+   cp .tmp/styles/main.css src/main/resources/static/styles/
+   
+   # Copy fonts and images (CSS references them with relative paths)
+   mkdir -p src/main/resources/static/styles/app/fonts
+   mkdir -p src/main/resources/static/styles/app/images
+   cp app/fonts/varela_round-webfont.* src/main/resources/static/styles/app/fonts/
+   cp app/fonts/montserrat-webfont.* src/main/resources/static/styles/app/fonts/
+   cp app/images/spring-logo-platform.png src/main/resources/static/styles/app/images/
+   cp app/images/*.png src/main/resources/static/styles/app/images/
    ```
 
-5. **Rebuild Spring Boot Service**:
+6. **Rebuild Spring Boot Service**:
    ```bash
    ./buildMaven.sh
    ```
+
+**Note**: Manual build is complex and error-prone. Use `./buildFrontend.sh` instead!
+
+#### Development Workflow
+
+For active frontend development:
+
+```bash
+# Terminal 1: Start development server (auto-reload on changes)
+cd web-apps-ui
+grunt serve
+# Opens browser at http://localhost:9900
+
+# Terminal 2: Make changes to files in app/ directory
+# Changes will auto-reload in browser
+
+# When done, build for production:
+./buildFrontend.sh  # Use the build script - it handles everything
+./buildMaven.sh     # Rebuild Spring Boot service
+```
 
 ### Frontend Dependencies
 
@@ -415,6 +551,21 @@ The frontend is a pre-built AngularJS application. The service runs using the bu
 - Grunt: ^0.4.1 (very old)
 - Node.js: >=0.10.0 (very old requirement)
 
+**⚠️ Security Vulnerabilities:**
+
+The current `package.json` has **multiple security vulnerabilities** in development dependencies:
+- **Critical**: grunt-karma (prototype pollution)
+- **High**: grunt (arbitrary code execution, race condition, path traversal)
+- **Moderate**: karma (cross-site scripting, open redirect)
+
+**Security Risk Assessment:**
+- **Runtime Risk**: **NONE** - These are development dependencies only. The service runs using pre-built static files and doesn't execute these tools at runtime.
+- **Development Risk**: **HIGH** - If you modify the frontend and run `npm install` or `grunt build`, you're using vulnerable tools.
+
+**Recommendation:**
+- **If NOT modifying frontend**: No action needed. The vulnerabilities don't affect the running service.
+- **If modifying frontend**: **Upgrade immediately** before running `npm install` or `grunt build`.
+
 **Upgrading Build Tools**:
 
 1. **Update `package.json`**:
@@ -441,6 +592,59 @@ The frontend is a pre-built AngularJS application. The service runs using the bu
    ```
 
 **Note**: Grunt 0.4 → 1.6 has significant breaking changes. You may need to update `Gruntfile.js` syntax.
+
+**Security-Focused Upgrade Example:**
+
+Here's a safer `package.json` with updated versions that address the security vulnerabilities:
+
+```json
+{
+  "name": "customersstoresui",
+  "version": "0.0.0",
+  "devDependencies": {
+    "grunt": "^1.6.0",
+    "grunt-autoprefixer": "^0.8.2",
+    "grunt-concurrent": "^3.0.1",
+    "grunt-contrib-clean": "^2.0.1",
+    "grunt-contrib-concat": "^2.1.0",
+    "grunt-contrib-connect": "^3.0.0",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-cssmin": "^5.0.0",
+    "grunt-contrib-htmlmin": "^3.1.0",
+    "grunt-contrib-imagemin": "^5.0.0",
+    "grunt-contrib-jshint": "^3.2.0",
+    "grunt-contrib-uglify": "^5.2.2",
+    "grunt-contrib-watch": "^1.1.0",
+    "grunt-filerev": "^2.3.1",
+    "grunt-google-cdn": "^0.6.0",
+    "grunt-newer": "^1.3.0",
+    "grunt-ngmin": "^0.0.3",
+    "grunt-svgmin": "^6.0.1",
+    "grunt-usemin": "^3.1.1",
+    "grunt-wiredep": "^5.0.0",
+    "jshint-stylish": "^2.2.1",
+    "load-grunt-tasks": "^5.1.0",
+    "time-grunt": "^2.0.0",
+    "grunt-karma": "^4.0.2",
+    "karma": "^6.4.0",
+    "karma-jasmine": "^5.1.0",
+    "karma-chrome-launcher": "^3.1.1",
+    "grunt-contrib-less": "^3.0.0",
+    "grunt-connect-proxy": "^0.2.3"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "test": "grunt test"
+  }
+}
+```
+
+**Important Notes:**
+- `karma-phantomjs-launcher` is deprecated (PhantomJS is no longer maintained). Use `karma-chrome-launcher` instead.
+- Many grunt plugins have breaking changes between versions.
+- Test thoroughly after upgrading, as some plugins may require configuration changes.
 
 ### Removing Unused Files
 
