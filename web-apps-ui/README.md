@@ -197,6 +197,85 @@ The frontend is an AngularJS application located in `src/main/resources/static/`
 - Store management (list, view)
 - Integration with backend APIs via gateway routes
 
+### Frontend Build Systems
+
+The project supports **two build systems**:
+
+#### 1. Modern Webpack Setup (Recommended) ⭐
+
+**Status**: ✅ Fully migrated and working
+
+The modern setup uses **Webpack** and **npm/yarn** instead of Grunt/Bower:
+
+- **Location**: `app/` directory (source files)
+- **Build Tool**: Webpack 5
+- **Package Manager**: npm/yarn (no Bower)
+- **Configuration**: `webpack.config.js`
+- **Entry Point**: `app/scripts/main.js`
+
+**Quick Start:**
+```bash
+cd web-apps-ui
+
+# Install dependencies
+yarn install
+# or
+npm install
+
+# Development server (with hot reload)
+npm start
+# Opens http://localhost:9900
+
+# Production build
+npm run build
+# Output: dist/ directory
+```
+
+**For detailed instructions**, see [REACT-NATIVE-MIGRATION.md](./REACT-NATIVE-MIGRATION.md)
+
+**Key Features:**
+- ✅ Hot module replacement (HMR)
+- ✅ Modern dependency management (npm/yarn)
+- ✅ Webpack 5 with code splitting
+- ✅ Production-ready builds
+- ✅ Source maps for debugging
+- ✅ Proxy configuration for backend services
+
+**Integration with Spring Boot:**
+After building with Webpack, copy the output to Spring Boot static resources:
+```bash
+npm run build
+cp -r dist/* src/main/resources/static/
+./buildMaven.sh
+```
+
+#### 2. Legacy Grunt/Bower Setup (Deprecated)
+
+**Status**: ⚠️ Still functional but deprecated
+
+The legacy setup uses **Grunt** and **Bower**:
+
+- **Location**: `app/` directory (source files)
+- **Build Tool**: Grunt
+- **Package Manager**: Bower + npm
+- **Configuration**: `Gruntfile.js`
+- **Build Script**: `buildFrontend.sh`
+
+**Quick Start:**
+```bash
+cd web-apps-ui
+./buildFrontend.sh
+```
+
+**Note**: This setup is maintained for backward compatibility but is **not recommended** for new development. Use the Webpack setup instead.
+
+**When to Use Each:**
+
+- **Use Webpack (Modern)**: ✅ For all new development, active maintenance, and production builds
+- **Use Grunt (Legacy)**: ⚠️ Only if you need to maintain compatibility with old build processes or if Webpack setup has issues
+
+**Both systems can coexist** - they both build from the same `app/` source directory to `dist/` or `src/main/resources/static/`.
+
 ---
 
 ## Configuration
@@ -331,14 +410,44 @@ The following files are used for frontend development and building:
 
 ### Building the Frontend
 
-**Quick Start - Build Frontend:**
+**Choose Your Build System:**
+
+#### Option 1: Modern Webpack Build (Recommended) ⭐
+
+```bash
+cd web-apps-ui
+
+# Install dependencies
+yarn install
+# or
+npm install
+
+# Build for production
+npm run build
+# Output: dist/ directory
+
+# Copy to Spring Boot static resources
+cp -r dist/* src/main/resources/static/
+
+# Rebuild Spring Boot service
+./buildMaven.sh
+```
+
+**For development with hot reload:**
+```bash
+npm start
+# Opens http://localhost:9900 with auto-reload
+```
+
+#### Option 2: Legacy Grunt Build (Deprecated)
+
 ```bash
 cd web-apps-ui
 ./buildFrontend.sh
 ./buildMaven.sh  # Rebuild Spring Boot service
 ```
 
-This single command handles everything: installing dependencies, building, and copying files.
+**Note**: The Webpack setup is recommended. The Grunt setup is maintained for backward compatibility only.
 
 ---
 
@@ -347,6 +456,29 @@ This single command handles everything: installing dependencies, building, and c
 The frontend is a pre-built AngularJS application. The service runs using the built files in `src/main/resources/static/`. 
 
 **If you need to modify the frontend:**
+
+#### Modern Webpack Development (Recommended) ⭐
+
+See [REACT-NATIVE-MIGRATION.md](./REACT-NATIVE-MIGRATION.md) for complete Webpack setup instructions.
+
+**Quick Development Workflow:**
+```bash
+cd web-apps-ui
+
+# Start development server (auto-reload on changes)
+npm start
+# Opens browser at http://localhost:9900
+
+# Make changes to files in app/ directory
+# Changes will auto-reload in browser
+
+# When done, build for production:
+npm run build
+cp -r dist/* src/main/resources/static/
+./buildMaven.sh
+```
+
+#### Legacy Grunt Development (Deprecated)
 
 #### Quick Build (Recommended)
 

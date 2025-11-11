@@ -16,20 +16,20 @@
     "clean": "rimraf dist .tmp"
   },
   "dependencies": {
-    "@popperjs/core": "^2.11.8",
     "angular": "^1.8.3",
     "angular-animate": "^1.8.3",
     "angular-cookies": "^1.8.3",
-    "angular-google-maps": "^2.4.1",
     "angular-resource": "^1.8.3",
     "angular-sanitize": "^1.8.3",
     "angular-touch": "^1.8.3",
     "angular-ui-router": "^1.0.30",
+    "angular-google-maps": "^2.4.1",
     "bootstrap": "^3.4.1",
-    "es5-shim": "^4.6.7",
+    "@popperjs/core": "^2.11.8",
     "jquery": "^3.7.1",
+    "lodash": "^4.17.21",
     "json3": "^3.3.3",
-    "lodash": "^4.17.21"
+    "es5-shim": "^4.6.7"
   },
   "devDependencies": {
     "@babel/core": "^7.23.5",
@@ -94,3 +94,4 @@
     "micromatch": "^4.0.8"
   }
 }
+
