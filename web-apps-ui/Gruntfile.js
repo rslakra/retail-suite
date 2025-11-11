@@ -87,23 +87,25 @@ module.exports = function (grunt) {
                 options.base = [options.base];
             }
 
+            var serveStatic = require('serve-static');
+
             // Setup the proxy
             var middlewares = [require('grunt-connect-proxy/lib/utils').proxyRequest];
 
             // Serve static files.
             options.base.forEach(function(base) {
               grunt.log.warn(base);
-              middlewares.push(connect.static(base));
+              middlewares.push(serveStatic(base));
             });
 
             // Make directory browse-able.
             var directory = options.directory || options.base[options.base.length - 1];
-            middlewares.push(connect.directory(directory));
+            middlewares.push(require('serve-index')(directory));
 
             middlewares.push(
               connect().use(
                 '/bower_components',
-                connect.static('./bower_components')
+                serveStatic('./bower_components')
               )
             );
 
@@ -125,14 +127,15 @@ module.exports = function (grunt) {
         options: {
           port: 9001,
           middleware: function (connect) {
+            var serveStatic = require('serve-static');
             return [
-              connect.static('.tmp'),
-              connect.static('test'),
+              serveStatic('.tmp'),
+              serveStatic('test'),
               connect().use(
                 '/bower_components',
-                connect.static('./bower_components')
+                serveStatic('./bower_components')
               ),
-              connect.static(appConfig.app)
+              serveStatic(appConfig.app)
             ];
           }
         }
