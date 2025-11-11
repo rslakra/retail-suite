@@ -2,13 +2,14 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const { AngularWebpackPlugin } = require('@ngtools/webpack');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
 
   return {
     entry: {
-      main: './app/scripts/main.js'
+      main: './src/main.ts'
     },
     output: {
       path: path.resolve(__dirname, 'dist'),
@@ -18,23 +19,34 @@ module.exports = (env, argv) => {
       clean: true
     },
     resolve: {
-      modules: ['node_modules', 'app'],
+      extensions: ['.ts', '.js', '.json'],
+      modules: ['node_modules', 'src'],
       alias: {
-        'bower_components': path.resolve(__dirname, 'node_modules'),
-        'bootstrap-fonts': path.resolve(__dirname, 'node_modules/bootstrap/dist/fonts')
+        '@': path.resolve(__dirname, 'src')
       }
     },
     module: {
       rules: [
         {
-          test: /\.js$/,
-          exclude: /node_modules/,
-          use: {
-            loader: 'babel-loader',
-            options: {
-              presets: ['@babel/preset-env']
+          test: /\.html$/,
+          include: /src\/app/,
+          use: ['raw-loader']
+        },
+        {
+          test: /\.css$/,
+          include: /src\/app/,
+          exclude: /styles\.css$/,
+          resourceQuery: /ngResource/,
+          use: ['to-string-loader', 'css-loader']
+        },
+        {
+          test: /\.ts$/,
+          use: [
+            {
+              loader: '@ngtools/webpack'
             }
-          }
+          ],
+          exclude: /node_modules/
         },
         {
           test: /\.less$/,
@@ -63,7 +75,7 @@ module.exports = (env, argv) => {
                 lessOptions: {
                   paths: [
                     path.resolve(__dirname, 'node_modules'),
-                    path.resolve(__dirname, 'app')
+                    path.resolve(__dirname, 'src')
                   ]
                 }
               }
@@ -72,6 +84,7 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.css$/,
+          exclude: /src\/app/,
           use: [
             isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
             'css-loader'
@@ -90,13 +103,23 @@ module.exports = (env, argv) => {
           generator: {
             filename: 'fonts/[name][ext]'
           }
+        },
+        {
+          test: /\.html$/,
+          exclude: /src\/app/,
+          loader: 'html-loader'
         }
       ]
     },
     plugins: [
       new CleanWebpackPlugin(),
+      new AngularWebpackPlugin({
+        tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
+        jitMode: true,
+        directTemplateLoading: false
+      }),
       new HtmlWebpackPlugin({
-        template: './app/index.webpack.html',
+        template: './src/index.html',
         filename: 'index.html',
         inject: 'body',
         minify: isProduction ? {
@@ -115,15 +138,22 @@ module.exports = (env, argv) => {
       ] : [])
     ],
     devServer: {
-      static: {
-        directory: path.join(__dirname, 'app'),
-        publicPath: '/'
-      },
+      static: [
+        {
+          directory: path.join(__dirname, 'src'),
+          publicPath: '/'
+        },
+        {
+          directory: path.join(__dirname, 'src/app'),
+          publicPath: '/',
+          serveIndex: true
+        }
+      ],
       port: 9900,
       open: true,
       hot: true,
       historyApiFallback: true,
-      watchFiles: ['app/**/*'],
+      watchFiles: ['src/**/*'],
       proxy: [
         {
           context: ['/customers'],
@@ -152,4 +182,3 @@ module.exports = (env, argv) => {
     }
   };
 };
-
