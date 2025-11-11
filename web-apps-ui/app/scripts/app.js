@@ -7,9 +7,6 @@
  * # customersStoresUiApp
  *
  * Main module of the application.
-
- ,
-    'google-maps'
  */
 angular
   .module('customersStoresUiApp', [
@@ -19,7 +16,7 @@ angular
     'ui.router',
     'ngSanitize',
     'ngTouch',
-    'google-maps'
+    'uiGmapgoogle-maps'
   ])
   .constant('appConfiguration', {
     //e.g. http://myserver:9000/rest
