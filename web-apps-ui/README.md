@@ -721,6 +721,7 @@ The current `package.json` has **multiple security vulnerabilities** in developm
 3. **Test Build**:
    ```bash
    grunt build
+   lsof -ti:9900 | xargs kill -9
    ```
 
 **Note**: Grunt 0.4 → 1.6 has significant breaking changes. You may need to update `Gruntfile.js` syntax.
