@@ -114,14 +114,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>pl.project13.maven</groupId>
-                <artifactId>git-commit-id-plugin</artifactId>
-                <version>8.0.2</version>
-                <configuration>
-                    <failOnNoGitDirectory>false</failOnNoGitDirectory>
-                </configuration>
-            </plugin>
-            <plugin>
                 <!--skip deploy -->
                 <artifactId>maven-deploy-plugin</artifactId>
                 <configuration>
