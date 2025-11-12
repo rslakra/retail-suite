@@ -101,6 +101,14 @@
     "got": "^12.6.1",
     "http-cache-semantics": "^4.1.1",
     "semver-regex": "^4.0.5",
-    "micromatch": "^4.0.8"
+    "micromatch": "^4.0.8",
+    "webpack-dev-server": "^5.2.1",
+    "esbuild": "^0.25.0",
+    "tmp": "^0.2.5"
+  },
+  "resolutions": {
+    "webpack-dev-server": "^5.2.1",
+    "esbuild": "^0.25.0",
+    "tmp": "^0.2.5"
   }
 }
