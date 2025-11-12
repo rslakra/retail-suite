@@ -7,6 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
+import org.springframework.data.mongodb.core.index.GeospatialIndex;
 import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurer;
 import org.springframework.stereotype.Controller;
@@ -27,13 +30,20 @@ import jakarta.annotation.PostConstruct;
 @EnableDiscoveryClient
 public class StoreServiceApplication implements RepositoryRestConfigurer {
 
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
     @Override
     public void configureRepositoryRestConfiguration(RepositoryRestConfiguration config, CorsRegistry cors) {
         config.exposeIdsFor(Store.class);
     }
 
     @PostConstruct
-    public void exposeIds() {
+    public void initialize() {
+        // Ensure geospatial index exists for location queries
+        mongoTemplate.indexOps(Store.class).ensureIndex(
+            new GeospatialIndex("address.location").typed(GeoSpatialIndexType.GEO_2DSPHERE)
+        );
     }
 
     /**
