@@ -116,7 +116,9 @@ public class StoreIntegration {
 		return sb.toString();
 	}
 
-	public Link defaultLink(Map<String, Object> parameters, String host) {
+	public Link defaultLink(Map<String, Object> parameters, String host, Throwable throwable) {
+		log.warn("Circuit breaker fallback triggered for store integration. Error: {}", 
+			throwable != null ? throwable.getMessage() : "Unknown error");
 		return null;
 	}
 }
