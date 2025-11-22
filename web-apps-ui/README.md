@@ -98,23 +98,45 @@ The build script creates:
 
 ### Run Commands
 
-**Option 1: Using run script**
+**Option 1: Using run script (Spring Boot - Production)**
 ```bash
 cd web-apps-ui
 ./runMaven.sh
 ```
 
-**Option 2: Using Maven**
+**Option 2: Using Maven (Spring Boot - Production)**
 ```bash
 cd web-apps-ui
 mvn spring-boot:run
 ```
 
-**Option 3: Run JAR file**
+**Option 3: Run JAR file (Spring Boot - Production)**
 ```bash
 cd web-apps-ui
 java -jar target/web-apps-ui-*.jar
 ```
+
+**Option 4: Frontend Development Server (Hot Reload)**
+For active frontend development with hot module replacement:
+```bash
+cd web-apps-ui
+
+# Install dependencies (first time only)
+yarn install
+# or
+npm install
+
+# Start development server
+npm start
+# or
+yarn start
+# Opens http://localhost:9900 with auto-reload on file changes
+```
+
+**Note**: 
+- Options 1-3 run the Spring Boot service with pre-built static files
+- Option 4 runs the Webpack development server for frontend development
+- Both can run simultaneously on different ports if needed
 
 ### Environment Variables
 
@@ -676,6 +698,14 @@ grunt serve
 - Upgrading to modern AngularJS (1.8.x) or migrating to Angular (2+)
 - Upgrading Bootstrap to 3.4.x or 4.x/5.x
 - Testing thoroughly after upgrades
+
+### NPM Package Security
+
+**✅ Recent Security Fixes (2025):**
+- **glob**: Updated to ^11.1.0 (fixed command injection vulnerability in versions 10.3.7-11.0.3)
+- **js-yaml**: Updated to ^4.1.1 (fixed prototype pollution vulnerability in version 4.1.0)
+
+These fixes are enforced via `overrides` and `resolutions` in `package.json` to ensure all transitive dependencies use secure versions.
 
 ### Build Tool Dependencies
 

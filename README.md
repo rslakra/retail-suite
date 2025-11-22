@@ -18,6 +18,7 @@ The customer-service integrates with store-service to discover nearby stores for
 - Java 21+
 - Maven 3.6+
 - Docker (for infrastructure services)
+- Node.js 18+ and npm/yarn (for web-apps-ui frontend development - optional)
 
 **Infrastructure Services:**
 1. Start RabbitMQ: See [RabbitMQ README](rabbitmq/README.md)
@@ -197,10 +198,28 @@ cd customer-service && ./runMaven.sh
 cd store-service && ./runMaven.sh
 ```
 
-**Terminal 3 - UI Service:**
+**Terminal 3 - UI Service (Spring Boot):**
 ```bash
 cd web-apps-ui && ./runMaven.sh
 ```
+
+**Terminal 4 - UI Service (Frontend Development - Optional):**
+For frontend development with hot reload:
+```bash
+cd web-apps-ui
+# Install dependencies (first time only)
+yarn install
+# or
+npm install
+
+# Start development server with hot reload
+npm start
+# or
+yarn start
+# Opens http://localhost:9900 with auto-reload on file changes
+```
+
+**Note**: The Spring Boot service (Terminal 3) serves the pre-built frontend. The frontend development server (Terminal 4) is optional and only needed if you're actively developing the frontend with hot reload.
 
 ---
 
@@ -310,6 +329,7 @@ For detailed troubleshooting, see individual service READMEs.
 
 - [ ] Install Java 21+
 - [ ] Install Maven 3.6+
+- [ ] (Optional) Install Node.js 18+ and npm/yarn (for frontend development)
 - [ ] Start RabbitMQ (see [RabbitMQ README](rabbitmq/README.md))
 - [ ] Start MongoDB (see [MongoDB README](mongodb/README.md))
 - [ ] (Optional) Set up Eureka Server
@@ -318,6 +338,7 @@ For detailed troubleshooting, see individual service READMEs.
 - [ ] Start customer-service: `cd customer-service && ./runMaven.sh`
 - [ ] Start store-service: `cd store-service && ./runMaven.sh`
 - [ ] Start web-apps-ui: `cd web-apps-ui && ./runMaven.sh`
+- [ ] (Optional) For frontend development: `cd web-apps-ui && npm install && npm start`
 - [ ] Access UI at: `http://localhost:9900`
 
 ---
