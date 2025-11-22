@@ -1,7 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const { AngularWebpackPlugin } = require('@ngtools/webpack');
 
 module.exports = (env, argv) => {
@@ -112,7 +111,6 @@ module.exports = (env, argv) => {
       ]
     },
     plugins: [
-      new CleanWebpackPlugin(),
       new AngularWebpackPlugin({
         tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
         jitMode: true,
