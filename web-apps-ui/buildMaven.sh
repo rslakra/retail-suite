@@ -1,22 +1,8 @@
 #!/bin/bash
 # Author: Rohtash Lakra
-clear
-VERSION="0.0"
-# Build Version Function
-function buildVersion() {
-  GIT_COMMIT_COUNT=$(git rev-list HEAD --count)
-  if [ $? -ne 0 ]; then
-    VERSION="${VERSION}.1"
-  else
-    VERSION="${VERSION}.${GIT_COMMIT_COUNT}"
-  fi
-  SNAPSHOT="${SNAPSHOT:-$!}"
-  if [[ ! -z ${SNAPSHOT} ]]; then
-      VERSION="${VERSION}-SNAPSHOT"
-  fi
-
-  echo "${VERSION}";
-}
+# Source common version function
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../version.sh"
 
 echo
 echo "${JAVA_HOME}"

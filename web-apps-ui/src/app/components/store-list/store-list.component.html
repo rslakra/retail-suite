@@ -1,6 +1,27 @@
 <h1>Stores</h1>
 
-<table class="table table-striped table-hover">
+<!-- Debug info toggle button -->
+<button type="button" class="btn btn-sm btn-outline-secondary mb-2" (click)="showDebug = !showDebug">
+  <i class="bi bi-bug"></i> {{ showDebug ? 'Hide' : 'Show' }} Debug Info
+</button>
+
+<!-- Debug info -->
+<div *ngIf="showDebug" class="alert alert-secondary">
+  <strong>Debug Info:</strong><br>
+  Error: {{ error || 'None' }}<br>
+  Stores Count: {{ stores.length }}<br>
+  Stores: {{ stores | json }}
+</div>
+
+<div *ngIf="error" class="alert alert-danger">
+  {{ error }}
+</div>
+
+<div *ngIf="!error && stores.length === 0" class="alert alert-warning">
+  No stores found.
+</div>
+
+<table *ngIf="!error && stores.length > 0" class="table table-striped table-hover">
   <thead>
     <tr>
       <th>Name</th>
@@ -10,8 +31,7 @@
   <tbody>
     <tr *ngFor="let store of stores">
       <td>{{store.name}}</td>
-      <td>{{store.address.city}}</td>
+      <td>{{store.address?.city}}</td>
     </tr>
   </tbody>
 </table>
-

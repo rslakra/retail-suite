@@ -1,28 +1,38 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { Store, StoreResponse } from '../models/store.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StoreService {
-  private apiUrl = window.location.protocol + '//' + window.location.host;
-
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getStores(): Observable<Store[]> {
-    return this.http.get<StoreResponse>(`${this.apiUrl}/stores`).pipe(
-      map(response => response._embedded?.stores || [])
+    // Use relative path to leverage webpack proxy
+    const url = '/stores';
+    console.log('Fetching stores from:', url);
+    return this.http.get<StoreResponse>(url).pipe(
+      map((response: StoreResponse) => {
+        console.log('Raw store response:', response);
+        const stores = response._embedded?.stores || [];
+        console.log('Extracted stores:', stores);
+        return stores;
+      }),
+      catchError((error) => {
+        console.error('Error in store service:', error);
+        return of([]); // Return empty array on error
+      })
     );
   }
 
   getStoresNearby(url: string): Observable<Store[]> {
     return this.http.get<StoreResponse>(url).pipe(
-      map(response => {
+      map((response: StoreResponse) => {
         const stores = response._embedded?.stores || [];
-        return stores.map(store => ({
+        return stores.map((store: Store) => ({
           ...store,
           latitude: store.address.location.y,
           longitude: store.address.location.x,

@@ -2,16 +2,21 @@
 
 ## Overview
 
-The **web-apps-ui** is a Spring Boot microservice that serves as a gateway and frontend for the retail-suite application. It provides an AngularJS-based user interface and routes requests to the customer-service and store-service using Spring Cloud Gateway.
+The **web-apps-ui** is a Spring Boot microservice that serves as a gateway and frontend for the retail-suite application. It provides an **Angular 21**-based user interface and routes requests to the customer-service and store-service using Spring Cloud Gateway.
 
-**Key Features:**
-- AngularJS frontend for customer and store management
+## Key Features
+
+- **Angular 21** frontend with TypeScript for customer and store management
+- **Bootstrap 5.3.3** for modern, responsive UI components
 - Spring Cloud Gateway for routing to backend services
-- Service discovery via Eureka
+- Service discovery via Eureka (optional)
 - Static resource serving
 - API gateway functionality
-
----
+- Webpack 5 for modern build tooling
+- Hot module replacement for development
+- Customer management (list, create, view details, delete)
+- Store management (list, view)
+- Google Maps integration for store locations
 
 ## Service Information
 
@@ -22,7 +27,21 @@ The **web-apps-ui** is a Spring Boot microservice that serves as a gateway and f
 - **Spring Boot**: 3.5.7
 - **Spring Cloud**: 2024.0.0
 
----
+## Tech Stack
+
+### Backend
+- **Spring Boot**: 3.5.7
+- **Spring Cloud Gateway**: 2024.0.0
+- **Java**: 21
+
+### Frontend
+- **Angular**: 21.0.6
+- **TypeScript**: 5.9.0
+- **Bootstrap**: 5.3.3
+- **RxJS**: 7.8.1
+- **Webpack**: 5.89.0
+- **Node.js**: >= 18.0.0
+- **npm**: >= 9.0.0
 
 ## Dependencies
 
@@ -50,15 +69,43 @@ The **web-apps-ui** is a Spring Boot microservice that serves as a gateway and f
 - Spring Cloud Starter Netflix Eureka Client
 - Spring Cloud Starter Config
 
----
+### Gateway Routes
+
+The service uses Spring Cloud Gateway to route requests to backend services:
+
+| Route           | Backend Service  | Description                           |
+|-----------------|------------------|---------------------------------------|
+| `/stores/**`    | store-service    | Routes to store-service               |
+| `/customers/**` | customer-service | Routes to customer-service            |
+| `/`             | Static           | Redirects to `/index.html#/customers` |
+
+**Default Configuration (Direct URLs):**
+- `http://localhost:8081` - Direct route to store-service
+- `http://localhost:9000` - Direct route to customer-service
+
+**Using Eureka (Optional):**
+Update routes in `application.yml` to use `lb://store-service` or `lb://customer-service` for service discovery.
+
+**Environment Variables:**
+```bash
+export STORE_SERVICE_URI=http://localhost:8081
+export CUSTOMER_SERVICE_URI=http://localhost:9000
+export CONFIG_SERVER_URI=http://localhost:8888
+```
 
 ## Build
 
 ### Prerequisites
+
+**Backend:**
 - Java 21+
 - Maven 3.6+
 
-### Build Commands
+**Frontend:**
+- Node.js >= 18.0.0
+- npm >= 9.0.0
+
+### Build Backend
 
 **Option 1: Using build script (recommended)**
 ```bash
@@ -84,7 +131,34 @@ The build script creates:
 - SNAPSHOT version: `target/web-apps-ui-0.0.X-SNAPSHOT.jar`
 - RELEASE version: `target/web-apps-ui-0.0.X.jar`
 
----
+### Build Frontend
+
+**Install dependencies (first time only):**
+```bash
+cd web-apps-ui
+npm install
+# or
+yarn install
+```
+
+**Production build:**
+```bash
+# Build for production
+npm run build
+# Output: dist/ directory
+
+# Copy to Spring Boot static resources
+cp -r dist/* src/main/resources/static/
+
+# Rebuild Spring Boot service
+./buildMaven.sh
+```
+
+**Development build (with source maps):**
+```bash
+npm run build:dev
+# Source maps available in browser DevTools
+```
 
 ## Run
 
@@ -96,241 +170,47 @@ The build script creates:
 
 2. **Start Eureka Server** (optional, for service discovery)
 
-### Run Commands
+### Run Backend
 
-**Option 1: Using run script (Spring Boot - Production)**
+**Option 1: Using run script (recommended)**
 ```bash
 cd web-apps-ui
 ./runMaven.sh
 ```
 
-**Option 2: Using Maven (Spring Boot - Production)**
+**Option 2: Using Maven**
 ```bash
 cd web-apps-ui
 mvn spring-boot:run
 ```
 
-**Option 3: Run JAR file (Spring Boot - Production)**
+**Option 3: Run JAR file**
 ```bash
 cd web-apps-ui
 java -jar target/web-apps-ui-*.jar
 ```
 
-**Option 4: Frontend Development Server (Hot Reload)**
+**Note**: These options run the Spring Boot service with pre-built static files from `src/main/resources/static/`.
+
+### Run Frontend (Development Server)
+
 For active frontend development with hot module replacement:
 ```bash
 cd web-apps-ui
 
 # Install dependencies (first time only)
-yarn install
-# or
 npm install
 
 # Start development server
 npm start
-# or
-yarn start
 # Opens http://localhost:9900 with auto-reload on file changes
+# Proxies /customers → http://localhost:9000
+# Proxies /stores → http://localhost:8081
 ```
 
-**Note**: 
-- Options 1-3 run the Spring Boot service with pre-built static files
-- Option 4 runs the Webpack development server for frontend development
-- Both can run simultaneously on different ports if needed
+**Note**: The Webpack development server runs independently and can run simultaneously with the Spring Boot service on different ports if needed.
 
-### Environment Variables
-
-```bash
-# Backend Service URLs (optional, defaults to localhost)
-export STORE_SERVICE_URI=http://localhost:8081
-export CUSTOMER_SERVICE_URI=http://localhost:9000
-
-# Config Server (optional)
-export CONFIG_SERVER_URI=http://localhost:8888
-```
-
----
-
-## Test
-
-### Run Tests
-
-Currently, there are no unit tests in this service. To run tests (if added in the future):
-
-```bash
-cd web-apps-ui
-mvn test
-```
-
----
-
-## Gateway Routes
-
-The service uses Spring Cloud Gateway to route requests to backend services:
-
-| Route           | Backend Service  | Description                           |
-|-----------------|------------------|---------------------------------------|
-| `/stores/**`    | store-service    | Routes to store-service               |
-| `/customers/**` | customer-service | Routes to customer-service            |
-| `/`             | Static           | Redirects to `/index.html#/customers` |
-
-### Service Discovery
-
-**Default Configuration (Direct URLs):**
-The gateway uses direct URLs by default (no Eureka required):
-- `http://localhost:8081` - Direct route to store-service
-- `http://localhost:9000` - Direct route to customer-service
-
-**Using Eureka (Optional):**
-If you want to use Eureka for service discovery and load balancing, update the routes in `application.yml`:
-```yaml
-spring:
-  cloud:
-    gateway:
-      routes:
-        - id: stores
-          uri: lb://store-service  # Use lb:// for service discovery
-        - id: customers
-          uri: lb://customer-service  # Use lb:// for service discovery
-```
-
-**Environment Variables:**
-You can override service URLs using environment variables:
-```bash
-export STORE_SERVICE_URI=http://localhost:8081
-export CUSTOMER_SERVICE_URI=http://localhost:9000
-```
-
----
-
-## Frontend
-
-### AngularJS Application
-
-The frontend is an AngularJS application located in `src/main/resources/static/`:
-- **Main HTML**: `index.html`
-- **Views**: `views/` directory
-- **Scripts**: `scripts/` directory
-- **Styles**: `styles/` directory
-
-### Frontend Features
-
-- Customer management (list, create, view details)
-- Store management (list, view)
-- Integration with backend APIs via gateway routes
-
-### Frontend Build Systems
-
-The project supports **two build systems**:
-
-#### 1. Modern Webpack Setup (Recommended) ⭐
-
-**Status**: ✅ Fully migrated and working
-
-The modern setup uses **Webpack** and **npm/yarn** instead of Grunt/Bower:
-
-- **Location**: `app/` directory (source files)
-- **Build Tool**: Webpack 5
-- **Package Manager**: npm/yarn (no Bower)
-- **Configuration**: `webpack.config.js`
-- **Entry Point**: `app/scripts/main.js`
-
-**Quick Start:**
-```bash
-cd web-apps-ui
-
-# Install dependencies
-yarn install
-# or
-npm install
-
-# Development server (with hot reload)
-npm start
-# Opens http://localhost:9900
-
-# Production build
-npm run build
-# Output: dist/ directory
-```
-
-**For detailed instructions**, see [REACT-NATIVE-MIGRATION.md](./REACT-NATIVE-MIGRATION.md)
-
-**Key Features:**
-- ✅ Hot module replacement (HMR)
-- ✅ Modern dependency management (npm/yarn)
-- ✅ Webpack 5 with code splitting
-- ✅ Production-ready builds
-- ✅ Source maps for debugging
-- ✅ Proxy configuration for backend services
-
-**Integration with Spring Boot:**
-After building with Webpack, copy the output to Spring Boot static resources:
-```bash
-npm run build
-cp -r dist/* src/main/resources/static/
-./buildMaven.sh
-```
-
-#### 2. Legacy Grunt/Bower Setup (Deprecated)
-
-**Status**: ⚠️ Still functional but deprecated
-
-The legacy setup uses **Grunt** and **Bower**:
-
-- **Location**: `app/` directory (source files)
-- **Build Tool**: Grunt
-- **Package Manager**: Bower + npm
-- **Configuration**: `Gruntfile.js`
-- **Build Script**: `buildFrontend.sh`
-
-**Quick Start:**
-```bash
-cd web-apps-ui
-./buildFrontend.sh
-```
-
-**Note**: This setup is maintained for backward compatibility but is **not recommended** for new development. Use the Webpack setup instead.
-
-**When to Use Each:**
-
-- **Use Webpack (Modern)**: ✅ For all new development, active maintenance, and production builds
-- **Use Grunt (Legacy)**: ⚠️ Only if you need to maintain compatibility with old build processes or if Webpack setup has issues
-
-**Both systems can coexist** - they both build from the same `app/` source directory to `dist/` or `src/main/resources/static/`.
-
----
-
-## Configuration
-
-### Application Configuration (`application.yml`)
-
-- **Server Port**: 9900
-- **Gateway Routes**: Configured to route to customer-service and store-service
-- **Eureka**: Optional service discovery
-- **Management Endpoints**: All endpoints exposed for monitoring
-
-### Gateway Configuration
-
-```yaml
-spring:
-  cloud:
-    gateway:
-      routes:
-        - id: stores
-          uri: ${STORE_SERVICE_URI:http://localhost:8081}
-          predicates:
-            - Path=/stores/**
-        - id: customers
-          uri: ${CUSTOMER_SERVICE_URI:http://localhost:9000}
-          predicates:
-            - Path=/customers/**
-```
-
-**Note:** The configuration uses direct URLs by default. To use Eureka service discovery, change `uri` to `lb://store-service` or `lb://customer-service`.
-
----
-
-## Accessing the Application
+### Accessing the Application
 
 Once the service is running:
 
@@ -341,7 +221,81 @@ Once the service is running:
    - View stores
    - Search for stores near customers
 
----
+## Test
+
+Currently, there are no unit tests in this service. To run tests (if added in the future):
+
+**Backend tests:**
+```bash
+cd web-apps-ui
+mvn test
+```
+
+**Frontend tests:**
+```bash
+# Run tests once
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Lint TypeScript files
+npm run lint
+```
+
+## Project Structure
+
+### Backend Structure
+
+```
+src/main/
+  java/                    # Java source code
+  resources/
+    application.yml        # Application configuration
+    static/               # Built frontend files (served by Spring Boot)
+  docker/
+    Dockerfile            # Docker configuration
+```
+
+### Frontend Structure
+
+```
+src/
+  app/
+    components/           # Angular components
+      customer-list/
+      customer-add/
+      customer-details/
+      store-list/
+      about/
+    services/             # Angular services
+      customer.service.ts
+      store.service.ts
+    models/               # TypeScript interfaces
+      customer.model.ts
+      store.model.ts
+    app.component.ts      # Root component
+    app.module.ts         # Root module
+    app.routes.ts         # Routing configuration
+  assets/                 # Static assets
+  main.ts                 # Application entry point
+  index.html              # Main HTML template
+  styles.css              # Global styles
+```
+
+### Build Tools and Configuration Files
+
+| File                         | Purpose                                              | Required for Running?                 |
+|------------------------------|------------------------------------------------------|---------------------------------------|
+| `package.json`               | NPM dependencies (Angular, Webpack, build tools)     | No - only for frontend development    |
+| `webpack.config.js`          | Webpack build configuration                          | No - only for frontend development    |
+| `tsconfig.json`              | TypeScript compiler configuration                    | No - only for frontend development    |
+| `src/` directory             | Angular 21 TypeScript source code                    | No - only for frontend development    |
+| `src/main/resources/static/` | Built frontend files                                 | **Yes** - required for service to run |
+
+**Summary:**
+- **To run the service**: Only `src/main/resources/static/` is needed (already present)
+- **To modify the frontend**: You need `src/`, `package.json`, `webpack.config.js`, `tsconfig.json`, and Node.js 18+/npm 9+
 
 ## Troubleshooting
 
@@ -381,445 +335,57 @@ lsof -i :9900
 2. Check browser console for 404 errors
 3. Verify Spring Boot is serving static resources correctly
 
----
+### Frontend Development Issues
 
-## Project Structure
-
-### Frontend Files Organization
-
-The web-apps-ui has two sets of frontend files:
-
-1. **Source Files** (`app/` directory):
-   - **Purpose**: Original AngularJS source code for development
-   - **Contains**: 
-     - `app/scripts/` - JavaScript source files
-     - `app/styles/` - CSS/LESS source files
-     - `app/views/` - HTML templates
-     - `app/index.html` - Main HTML file
-   - **Required for**: Frontend development and modifications
-   - **Not required for**: Running the service (only needed if you want to modify the frontend)
-
-2. **Built/Static Files** (`src/main/resources/static/` directory):
-   - **Purpose**: Compiled, minified, and optimized frontend files served by Spring Boot
-   - **Contains**: Pre-built JavaScript, CSS, HTML, images, fonts
-   - **Required for**: Running the service (Spring Boot serves these files)
-   - **Generated from**: `app/` directory using build tools
-
-### Build Tools and Configuration Files
-
-The following files are used for frontend development and building:
-
-| File                         | Purpose                                              | Required for Running?                 |
-|------------------------------|------------------------------------------------------|---------------------------------------|
-| `package.json`               | NPM dependencies (Grunt, build tools)                | No - only for frontend development    |
-| `bower.json`                 | Frontend library dependencies (AngularJS, Bootstrap) | No - only for frontend development    |
-| `Gruntfile.js`               | Grunt build configuration                            | No - only for frontend development    |
-| `buildFrontend.sh`            | Script to build frontend from app/ to static/        | No - only for frontend development    |
-| `.bowerrc`                   | Bower configuration                                  | No - only for frontend development    |
-| `.jshintrc`                  | JavaScript linting rules                             | No - only for frontend development    |
-| `.travis.yml`                | Old CI/CD configuration (deprecated)                 | No - can be removed                   |
-| `app/` directory             | Frontend source code                                 | No - only for frontend development    |
-| `src/main/resources/static/` | Built frontend files                                 | **Yes** - required for service to run |
-
-### Summary
-
-- **To run the service**: Only `src/main/resources/static/` is needed (already present)
-- **To modify the frontend**: You need `app/`, `package.json`, `bower.json`, `Gruntfile.js`, and Node.js/NPM/Bower
-
----
-
-## Development
-
-### Building the Frontend
-
-**Choose Your Build System:**
-
-#### Option 1: Modern Webpack Build (Recommended) ⭐
-
+**Installation Issues:**
 ```bash
-cd web-apps-ui
-
-# Install dependencies
-yarn install
-# or
+# Clear cache and retry
+npm cache clean --force
+rm -rf node_modules package-lock.json
 npm install
 
-# Build for production
-npm run build
-# Output: dist/ directory
-
-# Copy to Spring Boot static resources
-cp -r dist/* src/main/resources/static/
-
-# Rebuild Spring Boot service
-./buildMaven.sh
+# If stuck on dependency resolution:
+npm install --legacy-peer-deps
 ```
 
-**For development with hot reload:**
+**Build Issues:**
 ```bash
+# Check for errors
+npm run build 2>&1 | tee build.log
+
+# Verify dependencies
+npm list --depth=0
+
+# Common fixes:
+# - Ensure Node.js >= 18.0.0
+# - Ensure npm >= 9.0.0
+# - Clear node_modules and reinstall
+```
+
+**Runtime Issues:**
+```bash
+# Check browser console for errors
+# Verify all dependencies loaded
+# Check network tab for failed requests
+
+# Verify build output
+ls -la dist/
+# Should contain: index.html, scripts/, styles/, images/, fonts/
+```
+
+**TypeScript Compilation Errors:**
+- Ensure `tsconfig.json` has correct `moduleResolution` setting
+- Check that all Angular imports are correct
+- Verify TypeScript version is 5.9.0 (compatible with Angular 21)
+
+**Debugging:**
+```bash
+# Development server with debugging
 npm start
-# Opens http://localhost:9900 with auto-reload
+# Open browser DevTools (F12)
+# Set breakpoints in src/app/**/*.ts files
+# Source maps are enabled for debugging
 ```
-
-#### Option 2: Legacy Grunt Build (Deprecated)
-
-```bash
-cd web-apps-ui
-./buildFrontend.sh
-./buildMaven.sh  # Rebuild Spring Boot service
-```
-
-**Note**: The Webpack setup is recommended. The Grunt setup is maintained for backward compatibility only.
-
----
-
-### Frontend Development
-
-The frontend is a pre-built AngularJS application. The service runs using the built files in `src/main/resources/static/`. 
-
-**If you need to modify the frontend:**
-
-#### Modern Webpack Development (Recommended) ⭐
-
-See [REACT-NATIVE-MIGRATION.md](./REACT-NATIVE-MIGRATION.md) for complete Webpack setup instructions.
-
-**Quick Development Workflow:**
-```bash
-cd web-apps-ui
-
-# Start development server (auto-reload on changes)
-npm start
-# Opens browser at http://localhost:9900
-
-# Make changes to files in app/ directory
-# Changes will auto-reload in browser
-
-# When done, build for production:
-npm run build
-cp -r dist/* src/main/resources/static/
-./buildMaven.sh
-```
-
-#### Legacy Grunt Development (Deprecated)
-
-#### Quick Build (Recommended)
-
-Use the provided build script:
-
-```bash
-cd web-apps-ui
-./buildFrontend.sh
-```
-
-This script automatically:
-1. **Checks prerequisites**: Node.js, NPM, Bower, Grunt CLI (installs missing tools)
-2. **Installs NPM dependencies**: Uses `--legacy-peer-deps` for compatibility with old packages
-3. **Installs Bower dependencies**: Frontend libraries (AngularJS, Bootstrap, etc.)
-4. **Installs missing imagemin dependencies**: Required for image optimization
-5. **Applies Node.js compatibility fixes**: For Node.js 12+ (graceful-fs fix)
-6. **Builds frontend using Grunt**: Runs `grunt build --force` (continues despite non-critical errors)
-7. **Backs up existing static files**: Creates timestamped backup before overwriting
-8. **Copies built files**: From `dist/` to `src/main/resources/static/`
-9. **Copies bower_components**: Needed for unprocessed build blocks in HTML
-10. **Copies source scripts**: Individual JS files (app.js, routes.js, controllers)
-11. **Compiles LESS to CSS**: Converts LESS files to CSS
-12. **Copies fonts**: To `styles/app/fonts/` (CSS references them with relative paths)
-13. **Copies images**: To `styles/app/images/` (CSS references them with relative paths)
-14. **Cleans up backup folders**: Removes old backups after successful build
-
-After building, rebuild the Spring Boot service:
-```bash
-./buildMaven.sh
-```
-
-**Note**: The script handles Node.js compatibility issues automatically. Some non-critical errors (cdnify, grunt-karma) may appear but are ignored with the `--force` flag.
-
-**⚠️ Node.js Version Compatibility:**
-
-The script automatically handles Node.js compatibility:
-- **Node.js 14-16**: Works best, no compatibility issues
-- **Node.js 18+**: Script applies workarounds automatically (graceful-fs fix)
-- **Node.js 12-13**: Works with compatibility fixes
-- **Node.js < 12**: May have issues, upgrade recommended
-
-The build script will:
-- Warn you if using Node.js 18+
-- Automatically install compatibility fixes
-- Continue building despite non-critical errors (uses `--force` flag)
-
-**For best results with Node.js 18+:**
-```bash
-# Install nvm (Node Version Manager)
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-
-# Install and use Node.js 16
-nvm install 16
-nvm use 16
-
-# Then run the build
-./buildFrontend.sh
-```
-
-#### Manual Build Steps
-
-If you prefer to build manually (not recommended - use `buildFrontend.sh` instead):
-
-1. **Prerequisites**:
-   ```bash
-   # Install Node.js (if not installed)
-   # Download from https://nodejs.org/ or use:
-   brew install node  # macOS
-   
-   # Install Bower globally
-   npm install -g bower
-   
-   # Install Grunt CLI globally
-   npm install -g grunt-cli
-   ```
-
-2. **Install Dependencies**:
-   ```bash
-   cd web-apps-ui
-   npm install --legacy-peer-deps  # Use --legacy-peer-deps for compatibility
-   bower install
-   ```
-
-3. **Install Missing Dependencies**:
-   ```bash
-   # Install imagemin dependencies
-   npm install imagemin-gifsicle imagemin-jpegtran imagemin-optipng imagemin-svgo --save-dev --legacy-peer-deps
-   
-   # Install Node.js compatibility fix (for Node.js 12+)
-   npm install graceful-fs@latest --save-dev --legacy-peer-deps
-   ```
-
-4. **Build the Frontend**:
-   ```bash
-   # Production build (minified, optimized) - Recommended
-   grunt build --force  # Use --force to continue despite non-critical errors
-   ```
-   This builds from `app/` to `dist/` directory.
-
-5. **Copy to Static Resources**:
-   ```bash
-   # Backup existing files (optional)
-   cp -r src/main/resources/static src/main/resources/static.backup.$(date +%Y%m%d_%H%M%S)
-   
-   # Remove old static files
-   rm -rf src/main/resources/static/*
-   
-   # Copy built files
-   cp -r dist/* src/main/resources/static/
-   
-   # Copy bower_components (needed for unprocessed build blocks)
-   cp -r bower_components src/main/resources/static/
-   
-   # Copy source scripts
-   mkdir -p src/main/resources/static/scripts/controllers
-   cp app/scripts/*.js src/main/resources/static/scripts/
-   cp -r app/scripts/controllers/*.js src/main/resources/static/scripts/controllers/
-   
-   # Compile LESS to CSS
-   grunt less:server
-   cp .tmp/styles/main.css src/main/resources/static/styles/
-   
-   # Copy fonts and images (CSS references them with relative paths)
-   mkdir -p src/main/resources/static/styles/app/fonts
-   mkdir -p src/main/resources/static/styles/app/images
-   cp app/fonts/varela_round-webfont.* src/main/resources/static/styles/app/fonts/
-   cp app/fonts/montserrat-webfont.* src/main/resources/static/styles/app/fonts/
-   cp app/images/spring-logo-platform.png src/main/resources/static/styles/app/images/
-   cp app/images/*.png src/main/resources/static/styles/app/images/
-   ```
-
-6. **Rebuild Spring Boot Service**:
-   ```bash
-   ./buildMaven.sh
-   ```
-
-**Note**: Manual build is complex and error-prone. Use `./buildFrontend.sh` instead!
-
-#### Development Workflow
-
-For active frontend development:
-
-```bash
-# Terminal 1: Start development server (auto-reload on changes)
-cd web-apps-ui
-grunt serve
-# Opens browser at http://localhost:9900
-
-# Terminal 2: Make changes to files in app/ directory
-# Changes will auto-reload in browser
-
-# When done, build for production:
-./buildFrontend.sh  # Use the build script - it handles everything
-./buildMaven.sh     # Rebuild Spring Boot service
-```
-
-### Frontend Dependencies
-
-**Current Versions** (from `bower.json`):
-- AngularJS: 1.2.16 (very old - consider upgrading)
-- Bootstrap: 3.2.0 (old - consider upgrading)
-- Angular UI Router: 0.2.10
-- Angular Google Maps: 1.2.0
-
-**Upgrading Frontend Dependencies**:
-
-1. **Update `bower.json`**:
-   ```json
-   {
-     "dependencies": {
-       "angular": "1.8.x",  // Upgrade from 1.2.16
-       "bootstrap": "3.4.x",  // Upgrade from 3.2.0
-       ...
-     }
-   }
-   ```
-
-2. **Update Dependencies**:
-   ```bash
-   bower update
-   ```
-
-3. **Test and Fix Breaking Changes**:
-   - AngularJS 1.2 → 1.8 has breaking changes
-   - Test thoroughly after upgrading
-   - Update code if needed
-
-4. **Rebuild**:
-   ```bash
-   grunt build
-   cp -r dist/* src/main/resources/static/
-   ```
-
-**Note**: The current frontend dependencies are very old (from 2014). Consider:
-- Upgrading to modern AngularJS (1.8.x) or migrating to Angular (2+)
-- Upgrading Bootstrap to 3.4.x or 4.x/5.x
-- Testing thoroughly after upgrades
-
-### NPM Package Security
-
-**✅ Recent Security Fixes (2025):**
-- **glob**: Updated to ^11.1.0 (fixed command injection vulnerability in versions 10.3.7-11.0.3)
-- **js-yaml**: Updated to ^4.1.1 (fixed prototype pollution vulnerability in version 4.1.0)
-
-These fixes are enforced via `overrides` and `resolutions` in `package.json` to ensure all transitive dependencies use secure versions.
-
-### Build Tool Dependencies
-
-**Current Versions** (from `package.json`):
-- Grunt: ^0.4.1 (very old)
-- Node.js: >=0.10.0 (very old requirement)
-
-**⚠️ Security Vulnerabilities:**
-
-The current `package.json` has **multiple security vulnerabilities** in development dependencies:
-- **Critical**: grunt-karma (prototype pollution)
-- **High**: grunt (arbitrary code execution, race condition, path traversal)
-- **Moderate**: karma (cross-site scripting, open redirect)
-
-**Security Risk Assessment:**
-- **Runtime Risk**: **NONE** - These are development dependencies only. The service runs using pre-built static files and doesn't execute these tools at runtime.
-- **Development Risk**: **HIGH** - If you modify the frontend and run `npm install` or `grunt build`, you're using vulnerable tools.
-
-**Recommendation:**
-- **If NOT modifying frontend**: No action needed. The vulnerabilities don't affect the running service.
-- **If modifying frontend**: **Upgrade immediately** before running `npm install` or `grunt build`.
-
-**Upgrading Build Tools**:
-
-1. **Update `package.json`**:
-   ```json
-   {
-     "devDependencies": {
-       "grunt": "^1.6.0",  // Upgrade from 0.4.1
-       ...
-     },
-     "engines": {
-       "node": ">=14.0.0"  // Upgrade from 0.10.0
-     }
-   }
-   ```
-
-2. **Update Dependencies**:
-   ```bash
-   npm update
-   ```
-
-3. **Test Build**:
-   ```bash
-   grunt build
-   lsof -ti:9900 | xargs kill -9
-   ```
-
-**Note**: Grunt 0.4 → 1.6 has significant breaking changes. You may need to update `Gruntfile.js` syntax.
-
-**Security-Focused Upgrade Example:**
-
-Here's a safer `package.json` with updated versions that address the security vulnerabilities:
-
-```json
-{
-  "name": "customersstoresui",
-  "version": "0.0.0",
-  "devDependencies": {
-    "grunt": "^1.6.0",
-    "grunt-autoprefixer": "^0.8.2",
-    "grunt-concurrent": "^3.0.1",
-    "grunt-contrib-clean": "^2.0.1",
-    "grunt-contrib-concat": "^2.1.0",
-    "grunt-contrib-connect": "^3.0.0",
-    "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-cssmin": "^5.0.0",
-    "grunt-contrib-htmlmin": "^3.1.0",
-    "grunt-contrib-imagemin": "^5.0.0",
-    "grunt-contrib-jshint": "^3.2.0",
-    "grunt-contrib-uglify": "^5.2.2",
-    "grunt-contrib-watch": "^1.1.0",
-    "grunt-filerev": "^2.3.1",
-    "grunt-google-cdn": "^0.6.0",
-    "grunt-newer": "^1.3.0",
-    "grunt-ngmin": "^0.0.3",
-    "grunt-svgmin": "^6.0.1",
-    "grunt-usemin": "^3.1.1",
-    "grunt-wiredep": "^5.0.0",
-    "jshint-stylish": "^2.2.1",
-    "load-grunt-tasks": "^5.1.0",
-    "time-grunt": "^2.0.0",
-    "grunt-karma": "^4.0.2",
-    "karma": "^6.4.0",
-    "karma-jasmine": "^5.1.0",
-    "karma-chrome-launcher": "^3.1.1",
-    "grunt-contrib-less": "^3.0.0",
-    "grunt-connect-proxy": "^0.2.3"
-  },
-  "engines": {
-    "node": ">=14.0.0"
-  },
-  "scripts": {
-    "test": "grunt test"
-  }
-}
-```
-
-**Important Notes:**
-- `karma-phantomjs-launcher` is deprecated (PhantomJS is no longer maintained). Use `karma-chrome-launcher` instead.
-- Many grunt plugins have breaking changes between versions.
-- Test thoroughly after upgrading, as some plugins may require configuration changes.
-
-### Removing Unused Files
-
-If you're not planning to modify the frontend, you can optionally remove:
-- `app/` directory (source files)
-- `package.json`, `bower.json`, `Gruntfile.js` (build tools)
-- `.bowerrc`, `.jshintrc`, `.travis.yml` (config files)
-- `test/` directory (if present)
-
-**However**, it's recommended to keep them for future reference and potential frontend updates.
-
----
 
 ## Docker
 
@@ -837,29 +403,85 @@ docker run -p 9900:9900 \
   web-apps-ui:latest
 ```
 
----
+## Notes
 
-## Related Services
+### Migration History
+
+**✅ Completed Migrations:**
+
+1. **AngularJS → Angular 21** (Completed)
+   - Migrated from AngularJS 1.8.3 to Angular 21.0.6
+   - Converted JavaScript to TypeScript
+   - Updated all components, services, and routing
+   - Resolved all AngularJS security vulnerabilities
+   - **Architecture changes:**
+     - Module-based → Component-based architecture
+     - Controllers → Components
+     - $scope → Component properties
+     - $http service → HttpClient
+     - JavaScript → TypeScript
+   - **Key migration points:**
+     - Routing: Uses `@angular/router` instead of `angular-ui-router`
+     - HTTP: Uses `HttpClient` with observables instead of `$http` promises
+     - Templates: Uses Angular directives (`*ngFor`, `*ngIf`) instead of AngularJS directives
+     - Forms: Uses Angular Forms with `ngModel` instead of `ng-model`
+     - Bootstrap: Updated to Bootstrap 5 with new class names
+
+2. **Bootstrap 3 → Bootstrap 5** (Completed)
+   - Migrated from Bootstrap 3.4.1 to Bootstrap 5.3.3
+   - Updated all CSS classes and components
+   - Resolved all Bootstrap XSS vulnerabilities
+
+3. **Build System Modernization** (Completed)
+   - Migrated from Grunt/Bower to Webpack/npm
+   - Updated to Webpack 5 with modern tooling
+   - Implemented TypeScript compilation
+   - Added hot module replacement for development
+
+### Security
+
+**✅ All Security Vulnerabilities Resolved**
+
+The migration to Angular 21 and Bootstrap 5 has resolved all known security vulnerabilities:
+
+- ✅ **AngularJS vulnerabilities**: Eliminated by migrating to Angular 21
+- ✅ **Bootstrap 3 XSS vulnerabilities**: Eliminated by migrating to Bootstrap 5
+- ✅ **webpack-dev-server vulnerabilities**: Updated to 5.2.1
+- ✅ **Dependency vulnerabilities**: All critical and high-severity issues resolved
+
+**Security Best Practices:**
+1. **Input Validation**: Always validate and sanitize user inputs on the server side
+2. **Content Security Policy**: Implement strict CSP headers
+3. **Regular Audits**: Run `npm audit` regularly to identify new vulnerabilities
+4. **Dependency Updates**: Keep dependencies up to date
+5. **Security Headers**: Implement security headers (X-Frame-Options, X-Content-Type-Options, etc.)
+6. **HTTPS**: Always use HTTPS in production
+7. **Rate Limiting**: Implement rate limiting to mitigate DoS attacks
+
+**Recent Security Fixes:**
+- **glob**: Updated to ^11.1.0 (fixed command injection vulnerability)
+- **js-yaml**: Updated to ^4.1.1 (fixed prototype pollution vulnerability)
+- **rimraf**: Updated to ^5.0.5 (fixed in overrides)
+
+These fixes are enforced via `overrides` and `resolutions` in `package.json` to ensure all transitive dependencies use secure versions.
+
+### Additional Notes
+
+- The service has been upgraded to **Spring Boot 3.5.7** and **Spring Cloud 2024.0.0**
+- **Ribbon** and **Hystrix** configurations have been removed (deprecated in Spring Boot 3.x)
+- Spring Cloud Gateway now uses **Spring Cloud LoadBalancer** instead of Ribbon
+- The service can run without Eureka, but load balancing requires service discovery
+- Frontend is built with **Angular 21** and **TypeScript 5.9**
+- Frontend is pre-built and served as static resources
+- No unit tests are currently implemented
+- The old `app/` directory (AngularJS) is preserved for reference but is no longer used
+
+### Related Services
 
 - **[Customer Service](../customer-service/README.md)** - Customer management backend
 - **[Store Service](../store-service/README.md)** - Store management backend
 
 ---
 
-## Notes
-
-- The service has been upgraded to **Spring Boot 3.5.7** and **Spring Cloud 2024.0.0**
-- **Ribbon** and **Hystrix** configurations have been removed (deprecated in Spring Boot 3.x)
-- Spring Cloud Gateway now uses **Spring Cloud LoadBalancer** instead of Ribbon
-- The service can run without Eureka, but load balancing requires service discovery
-- Frontend is pre-built and served as static resources
-- No unit tests are currently implemented
-
----
-
-## Legacy Notes
-
-The original README mentioned:
-- **Groovy/Spring CLI**: The service now uses Java (`WebAppsServiceApplication.java`), not Groovy
-- **Grunt/Bower**: Used for frontend development, but the service now uses pre-built static resources
-- **Spring Boot CLI**: No longer needed - use `mvn spring-boot:run` instead
+# Author
+- Rohtash Lakra

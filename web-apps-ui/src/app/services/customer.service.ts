@@ -1,33 +1,36 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { Customer, CustomerResponse } from '../models/customer.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CustomerService {
-  private apiUrl = window.location.protocol + '//' + window.location.host;
-
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getCustomers(): Observable<Customer[]> {
-    return this.http.get<CustomerResponse>(`${this.apiUrl}/customers`).pipe(
-      map(response => response._embedded?.customers || [])
+    // Use relative path to leverage webpack proxy
+    return this.http.get<CustomerResponse>('/customers').pipe(
+      map((response: CustomerResponse) => response._embedded?.customers || []),
+      catchError((error) => {
+        console.error('Error in customer service:', error);
+        return of([]); // Return empty array on error
+      })
     );
   }
 
   getCustomer(id: string): Observable<Customer> {
-    return this.http.get<Customer>(`${this.apiUrl}/customers/${id}`);
+    return this.http.get<Customer>(`/customers/${id}`);
   }
 
   createCustomer(customer: Customer): Observable<Customer> {
-    return this.http.post<Customer>(`${this.apiUrl}/customers`, customer);
+    return this.http.post<Customer>('/customers', customer);
   }
 
   deleteCustomer(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/customers/${id}`);
+    return this.http.delete<void>(`/customers/${id}`);
   }
 }
 
