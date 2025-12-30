@@ -1,6 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const { AngularWebpackPlugin } = require('@ngtools/webpack');
 
 module.exports = (env, argv) => {
@@ -12,8 +13,8 @@ module.exports = (env, argv) => {
     },
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: isProduction 
-        ? 'scripts/[name].[contenthash].js' 
+      filename: isProduction
+        ? 'scripts/[name].[contenthash].js'
         : 'scripts/[name].js',
       clean: true
     },
@@ -91,6 +92,7 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.(png|jpg|jpeg|gif|svg|ico)$/,
+          exclude: /src\/assets\//,
           type: 'asset/resource',
           generator: {
             filename: 'images/[name][ext]'
@@ -129,6 +131,15 @@ module.exports = (env, argv) => {
           useShortDoctype: true
         } : false
       }),
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: path.resolve(__dirname, 'src/assets'),
+            to: path.resolve(__dirname, 'dist/assets'),
+            noErrorOnMissing: true
+          }
+        ]
+      }),
       ...(isProduction ? [
         new MiniCssExtractPlugin({
           filename: 'styles/[name].[contenthash].css'
@@ -147,21 +158,27 @@ module.exports = (env, argv) => {
           serveIndex: true
         }
       ],
-      port: 9900,
+      port: 9016,
       open: true,
       hot: true,
       historyApiFallback: true,
       watchFiles: ['src/**/*'],
       proxy: [
         {
-          context: ['/customers'],
-          target: 'http://localhost:9000',
-          changeOrigin: true
+          context: ['/api/customers'],
+          target: 'http://localhost:8082',
+          changeOrigin: true,
+          pathRewrite: {
+            '^/api/customers': '/customers'
+          }
         },
         {
-          context: ['/stores'],
+          context: ['/api/stores'],
           target: 'http://localhost:8081',
-          changeOrigin: true
+          changeOrigin: true,
+          pathRewrite: {
+            '^/api/stores': '/stores'
+          }
         }
       ]
     },

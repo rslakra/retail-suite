@@ -20,9 +20,12 @@ The **web-apps-ui** is a Spring Boot microservice that serves as a gateway and f
 
 ## Service Information
 
-- **Port**: `9900`
+- **UI Spring Boot Port**: `8083`
+- **Angular Dev Server Port**: `9016` (npm start)
+- **Customer Service Port**: `8082`
+- **Store Service Port**: `8081`
 - **Application Name**: `retail-suite-ui`
-- **Base URL**: `http://localhost:9900`
+- **Base URL**: `http://localhost:8083` (Spring Boot) or `http://localhost:9016` (npm start)
 - **Java Version**: 21
 - **Spring Boot**: 3.5.7
 - **Spring Cloud**: 2024.0.0
@@ -59,7 +62,7 @@ The **web-apps-ui** is a Spring Boot microservice that serves as a gateway and f
 
 ### Backend Services (Required for Full Functionality)
 
-- **customer-service**: Must be running on port 9000 (or discoverable via Eureka)
+- **customer-service**: Must be running on port 8082 (or discoverable via Eureka)
 - **store-service**: Must be running on port 8081 (or discoverable via Eureka)
 
 ### Maven Dependencies
@@ -81,7 +84,7 @@ The service uses Spring Cloud Gateway to route requests to backend services:
 
 **Default Configuration (Direct URLs):**
 - `http://localhost:8081` - Direct route to store-service
-- `http://localhost:9000` - Direct route to customer-service
+- `http://localhost:8082` - Direct route to customer-service
 
 **Using Eureka (Optional):**
 Update routes in `application.yml` to use `lb://store-service` or `lb://customer-service` for service discovery.
@@ -89,7 +92,7 @@ Update routes in `application.yml` to use `lb://store-service` or `lb://customer
 **Environment Variables:**
 ```bash
 export STORE_SERVICE_URI=http://localhost:8081
-export CUSTOMER_SERVICE_URI=http://localhost:9000
+export CUSTOMER_SERVICE_URI=http://localhost:8082
 export CONFIG_SERVER_URI=http://localhost:8888
 ```
 
@@ -125,7 +128,10 @@ cd web-apps-ui
 mvn clean install -DskipTests=false
 ```
 
-**Note**: Currently, there are no unit tests in this service. The build script skips tests by default.
+**Note**: 
+- Currently, there are no unit tests in this service. The build script skips tests by default.
+- The `buildMaven.sh` script automatically builds the frontend (if needed) and copies it to `src/main/resources/static/` before running Maven
+- The `static/` folder is populated during the build process - it should be empty initially (or only contain `.gitkeep`)
 
 The build script creates:
 - SNAPSHOT version: `target/web-apps-ui-0.0.X-SNAPSHOT.jar`
@@ -147,10 +153,11 @@ yarn install
 npm run build
 # Output: dist/ directory
 
-# Copy to Spring Boot static resources
-cp -r dist/* src/main/resources/static/
+# Note: The build scripts (buildMaven.sh, runMaven.sh) automatically copy
+# dist/* to src/main/resources/static/ before building/running.
+# You don't need to manually copy files.
 
-# Rebuild Spring Boot service
+# Rebuild Spring Boot service (automatically handles static/ folder)
 ./buildMaven.sh
 ```
 
@@ -190,7 +197,10 @@ cd web-apps-ui
 java -jar target/web-apps-ui-*.jar
 ```
 
-**Note**: These options run the Spring Boot service with pre-built static files from `src/main/resources/static/`.
+**Note**: 
+- These options run the Spring Boot service with pre-built static files from `src/main/resources/static/`
+- The `runMaven.sh` script automatically builds the frontend (if needed) and copies it to `src/main/resources/static/` before starting the service
+- The `static/` folder is populated during the build process - it should be empty initially
 
 ### Run Frontend (Development Server)
 
@@ -203,8 +213,8 @@ npm install
 
 # Start development server
 npm start
-# Opens http://localhost:9900 with auto-reload on file changes
-# Proxies /customers → http://localhost:9000
+# Opens http://localhost:9016 with auto-reload on file changes
+# Proxies /customers → http://localhost:8082
 # Proxies /stores → http://localhost:8081
 ```
 
@@ -214,7 +224,7 @@ npm start
 
 Once the service is running:
 
-1. **Open browser**: `http://localhost:9900`
+1. **Open browser**: `http://localhost:9016` (for npm start) or `http://localhost:8083` (for Spring Boot)
 2. The application will redirect to the customers page
 3. Use the UI to:
    - View and manage customers
@@ -248,39 +258,62 @@ npm run lint
 ### Backend Structure
 
 ```
-src/main/
-  java/                    # Java source code
-  resources/
-    application.yml        # Application configuration
-    static/               # Built frontend files (served by Spring Boot)
-  docker/
-    Dockerfile            # Docker configuration
+/
+├── src/                              # The src folder
+│   └── main/                         # Main source directory
+│       ├── java/                     # Java source code
+│       ├── resources/                # Application resources
+│       │   ├── application.yml       # Application configuration file
+│       │   └── static/               # Built frontend files (populated by build process)
+│       │                             # Should be empty initially (or only contain .gitkeep)
+│       │                             # Automatically populated by buildMaven.sh or runMaven.sh
+│       └── docker/                   # Docker configuration directory
+│           └── Dockerfile            # Docker image build configuration
+├── buildMaven.sh                     # Maven build script that automatically builds frontend and packages the application
+├── runMaven.sh                       # Maven run script that automatically builds frontend and runs the Spring Boot application
+├── pom.xml                           # Project Object Model - Maven configuration file
+└── README.md                         # This documentation file
 ```
+
+**Important Notes about `static/` folder:**
+- The `src/main/resources/static/` folder should be **empty initially** (or only contain `.gitkeep` for Git tracking)
+- The build process (`buildMaven.sh`, `runMaven.sh`, `baseBuildMaven.sh`) automatically:
+  1. Checks if the frontend needs to be built
+  2. Builds the frontend using Webpack (if needed)
+  3. Copies the built files from `dist/` to `src/main/resources/static/`
+  4. Then runs Maven to package everything
+- **Do not manually maintain files in `static/`** - they are generated during the build
+- If you need to update the frontend, modify the source files in `src/` and rebuild
 
 ### Frontend Structure
 
 ```
-src/
-  app/
-    components/           # Angular components
-      customer-list/
-      customer-add/
-      customer-details/
-      store-list/
-      about/
-    services/             # Angular services
-      customer.service.ts
-      store.service.ts
-    models/               # TypeScript interfaces
-      customer.model.ts
-      store.model.ts
-    app.component.ts      # Root component
-    app.module.ts         # Root module
-    app.routes.ts         # Routing configuration
-  assets/                 # Static assets
-  main.ts                 # Application entry point
-  index.html              # Main HTML template
-  styles.css              # Global styles
+/
+├── src/                              # Frontend source directory
+│   ├── app/                          # Angular application directory
+│   │   ├── components/               # Angular components
+│   │   │   ├── customer-list/        # Customer list component
+│   │   │   ├── customer-add/         # Customer add component
+│   │   │   ├── customer-details/     # Customer details component
+│   │   │   ├── store-list/           # Store list component
+│   │   │   └── about/                # About component
+│   │   ├── services/                 # Angular services
+│   │   │   ├── customer.service.ts   # Customer service for API communication
+│   │   │   └── store.service.ts      # Store service for API communication
+│   │   ├── models/                   # TypeScript interfaces and models
+│   │   │   ├── customer.model.ts     # Customer data model
+│   │   │   └── store.model.ts        # Store data model
+│   │   ├── app.component.ts          # Root Angular component
+│   │   ├── app.module.ts             # Root Angular module
+│   │   └── app.routes.ts             # Angular routing configuration
+│   ├── assets/                       # Static assets (images, fonts, etc.)
+│   ├── main.ts                       # Application entry point
+│   ├── index.html                    # Main HTML template
+│   └── styles.css                    # Global CSS styles
+├── package.json                      # NPM dependencies and scripts configuration
+├── webpack.config.js                 # Webpack build configuration
+├── tsconfig.json                     # TypeScript compiler configuration
+└── README.md                         # This documentation file
 ```
 
 ### Build Tools and Configuration Files
@@ -291,18 +324,22 @@ src/
 | `webpack.config.js`          | Webpack build configuration                          | No - only for frontend development    |
 | `tsconfig.json`              | TypeScript compiler configuration                    | No - only for frontend development    |
 | `src/` directory             | Angular 21 TypeScript source code                    | No - only for frontend development    |
-| `src/main/resources/static/` | Built frontend files                                 | **Yes** - required for service to run |
+| `src/main/resources/static/` | Built frontend files (populated by build process)    | **Yes** - required for service to run |
 
 **Summary:**
-- **To run the service**: Only `src/main/resources/static/` is needed (already present)
+- **To run the service**: The `src/main/resources/static/` folder is automatically populated during the build process (`buildMaven.sh` or `runMaven.sh`)
+- **Important**: The `static/` folder should be **empty initially** (or only contain `.gitkeep`). The build scripts automatically copy the built frontend files from `dist/` to `static/` before Maven builds/runs
 - **To modify the frontend**: You need `src/`, `package.json`, `webpack.config.js`, `tsconfig.json`, and Node.js 18+/npm 9+
 
 ## Troubleshooting
 
 ### Port Already in Use
 ```bash
-lsof -i :9900
-# Kill process or change port in application.yml
+# For Angular/Node dev server (npm start):
+lsof -i :9016
+# For Spring Boot UI:
+lsof -i :8083
+# Kill process or change port in webpack.config.js (dev server) or application.yml (Spring Boot)
 ```
 
 ### Backend Services Not Found
@@ -313,12 +350,14 @@ lsof -i :9900
 - Verify customer-service and store-service are registered
 
 **If not using Eureka (default):**
-- The gateway uses direct URLs by default (`http://localhost:8081` and `http://localhost:9000`)
-- Ensure backend services are running on the default ports
+- The gateway uses direct URLs by default (`http://localhost:8081` for stores and `http://localhost:8082` for customers)
+- Ensure backend services are running on the default ports:
+  - Store service: `8081`
+  - Customer service: `8082`
 - Or set environment variables to override:
   ```bash
   export STORE_SERVICE_URI=http://localhost:8081
-  export CUSTOMER_SERVICE_URI=http://localhost:9000
+  export CUSTOMER_SERVICE_URI=http://localhost:8082
   ```
 
 ### Gateway Routes Not Working
@@ -326,14 +365,18 @@ lsof -i :9900
 1. Verify backend services are running
 2. Check gateway logs for routing errors
 3. Test backend services directly:
-   - `curl http://localhost:9000/customers`
+   - `curl http://localhost:8082/customers`
    - `curl http://localhost:8081/stores`
 
 ### Static Resources Not Loading
 
-1. Verify files exist in `src/main/resources/static/`
-2. Check browser console for 404 errors
-3. Verify Spring Boot is serving static resources correctly
+1. **Verify build process completed**: The `static/` folder should be populated by `buildMaven.sh` or `runMaven.sh`
+   - If `static/` is empty, run `./buildMaven.sh` or `./runMaven.sh` to build the frontend
+   - The build scripts automatically copy files from `dist/` to `src/main/resources/static/`
+2. **Verify files exist**: Check that `src/main/resources/static/index.html` exists after build
+3. **Check browser console** for 404 errors
+4. **Verify Spring Boot** is serving static resources correctly
+5. **Note**: The `static/` folder should be empty initially - it's populated during the build process
 
 ### Frontend Development Issues
 
@@ -398,7 +441,7 @@ docker build -t web-apps-ui:latest -f src/main/docker/Dockerfile .
 
 Run Docker container:
 ```bash
-docker run -p 9900:9900 \
+docker run -p 8083:8083 \
   -e CONFIG_SERVER_URI=http://host.docker.internal:8888 \
   web-apps-ui:latest
 ```

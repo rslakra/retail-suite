@@ -1,45 +1,34 @@
 server:
-  port: 9900
+  port: 8083
 
 spring:
   application:
     name: retail-suite-ui
-  config:
-    import: optional:configserver:${CONFIG_SERVER_URI:http://user:password@localhost:8888}
   cloud:
     compatibility-verifier:
       enabled: false
-    gateway:
-      routes:
-        - id: stores
-          uri: ${STORE_SERVICE_URI:http://localhost:8081}
-          predicates:
-            - Path=/stores/**
-        - id: customers
-          uri: ${CUSTOMER_SERVICE_URI:http://localhost:9000}
-          predicates:
-            - Path=/customers/**
-        - id: root
-          uri: no://op
-          predicates:
-            - Path=/
-          filters:
-            - RedirectTo=302, /index.html#/customers
-    loadbalancer:
-      ribbon:
+    config:
+      enabled: false
+      import-check:
         enabled: false
+  web:
+    resources:
+      static-locations: classpath:/static/
+      add-mappings: true
+
+# Backend service URIs for API proxy
+customer:
+  service:
+    uri: ${CUSTOMER_SERVICE_URI:http://localhost:8082}
+
+store:
+  service:
+    uri: ${STORE_SERVICE_URI:http://localhost:8081}
 
 logging:
   level:
     com.netflix.discovery: 'OFF'
-
-eureka:
-  instance:
-    leaseRenewalIntervalInSeconds: 10
-    metadataMap:
-      instanceId: ${vcap.application.instance_id:${spring.application.name}:${spring.application.instance_id:${server.port}}}
-  client:
-    registryFetchIntervalSeconds: 5
+    org.springframework.cloud: 'OFF'
 
 management:
   security:

@@ -11,8 +11,9 @@ export class StoreService {
   constructor(private http: HttpClient) { }
 
   getStores(): Observable<Store[]> {
-    // Use relative path to leverage webpack proxy
-    const url = '/stores';
+    // Use /api prefix for Spring Boot Gateway routing
+    // For webpack dev server, proxy will forward /api/stores to backend
+    const url = '/api/stores';
     console.log('Fetching stores from:', url);
     return this.http.get<StoreResponse>(url).pipe(
       map((response: StoreResponse) => {

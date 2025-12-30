@@ -15,9 +15,9 @@ The **customer-service** is a Spring Boot microservice that manages customer dat
 
 ## Service Information
 
-- **Port**: `9000`
+- **Port**: `8082`
 - **Application Name**: `customer-service`
-- **Base URL**: `http://localhost:9000`
+- **Base URL**: `http://localhost:8082`
 - **Java Version**: 21
 - **Spring Boot**: 3.5.7
 - **Spring Cloud**: 2024.0.0
@@ -43,10 +43,14 @@ The **customer-service** is a Spring Boot microservice that manages customer dat
 
 ### Database Options
 
-- **HSQLDB** (Default) - In-memory database, no setup required
+- **H2** (Default) - File-based database
+  - Profile: `h2`
+  - Connection: `jdbc:h2:file:~/Downloads/H2DB/RetailSuite`
+  - Username: `sa`, Password: (empty)
+  - H2 Console: `http://localhost:8082/h2`
 - **MySQL** (Optional) - Requires MySQL server
   - Profile: `mysql`
-  - Connection: `jdbc:mysql://localhost/customers`
+  - Connection: `jdbc:mysql://localhost/RetailSuite`
   - Username: `root`, Password: (empty)
 
 ### Maven Dependencies
@@ -58,9 +62,9 @@ The **customer-service** is a Spring Boot microservice that manages customer dat
 - Spring Cloud Starter Netflix Eureka Client
 - Spring Cloud Starter Circuit Breaker Resilience4j
 - Spring Cloud Starter Bus AMQP (RabbitMQ)
-- HSQLDB (default database)
+- H2 Database (default database)
 - MySQL Connector (optional, for MySQL profile)
-- Lombok
+- Spring HATEOAS
 
 ---
 
@@ -167,7 +171,7 @@ The service uses Spring Data REST to automatically expose REST endpoints for the
 
 ### Base URL
 ```
-http://localhost:9000
+http://localhost:8082
 ```
 
 ### Customer Endpoints
@@ -186,7 +190,7 @@ http://localhost:9000
 
 **Create a customer:**
 ```bash
-curl -X POST http://localhost:9000/customers \
+curl -X POST http://localhost:8082/customers \
   -H "Content-Type: application/json" \
   -d '{
     "firstname": "John",
@@ -205,12 +209,12 @@ curl -X POST http://localhost:9000/customers \
 
 **Get all customers:**
 ```bash
-curl http://localhost:9000/customers
+curl http://localhost:8082/customers
 ```
 
 **Get customer by ID:**
 ```bash
-curl http://localhost:9000/customers/1
+curl http://localhost:8082/customers/1
 ```
 
 ### Management Endpoints
@@ -247,8 +251,9 @@ The customer-service integrates with the store-service to provide nearby store l
 
 ### Application Configuration (`application.yml`)
 
-- **Server Port**: 9000
-- **Database**: HSQLDB (default) or MySQL (with `mysql` profile)
+- **Server Port**: 8082
+- **Database**: H2 (default, file-based at `~/Downloads/H2DB/RetailSuite`) or MySQL (with `mysql` profile)
+- **Store Service Integration**: `http://localhost:8081` (configured via `integration.stores.uri`)
 - **RabbitMQ**: Configured via environment variables
 - **Circuit Breaker**: Resilience4j configuration for store integration
 
@@ -259,10 +264,14 @@ resilience4j:
   circuitbreaker:
     instances:
       storeIntegration:
+        registerHealthIndicator: true
         slidingWindowSize: 10
         minimumNumberOfCalls: 5
-        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
         waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
 ```
 
 ---
@@ -271,7 +280,7 @@ resilience4j:
 
 1. **Port Already in Use**
    ```bash
-   lsof -i :9000
+   lsof -i :8082
    # Kill process or change port in application.yml
    ```
 
@@ -281,11 +290,13 @@ resilience4j:
 
 3. **Store Service Integration Failing**
    - Verify store-service is running on port 8081
-   - Check circuit breaker status: `http://localhost:9000/actuator/circuitbreakers`
+   - Check circuit breaker status: `http://localhost:8082/actuator/circuitbreakers`
+   - Verify store service URI in `application.yml`: `integration.stores.uri`
 
 4. **Database Issues**
-   - HSQLDB: No setup required (in-memory)
-   - MySQL: Ensure MySQL server is running and database `customers` exists
+   - H2: File-based database at `~/Downloads/H2DB/RetailSuite` (created automatically)
+   - H2 Console: Access at `http://localhost:8082/h2` (JDBC URL: `jdbc:h2:file:~/Downloads/H2DB/RetailSuite`)
+   - MySQL: Ensure MySQL server is running and database `RetailSuite` exists
 
 ---
 
@@ -300,7 +311,7 @@ docker build -t customer-service:latest -f src/main/docker/Dockerfile .
 
 Run Docker container:
 ```bash
-docker run -p 9000:9000 \
+docker run -p 8082:8082 \
   -e RABBITMQ_HOST=host.docker.internal \
   -e RABBITMQ_PORT=5672 \
   customer-service:latest

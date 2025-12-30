@@ -2,12 +2,13 @@ package com.rslakra.retailsuite.ui;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.stereotype.Controller;
+import org.springframework.context.annotation.ComponentScan;
 
-@EnableDiscoveryClient
-@SpringBootApplication
-@Controller
+@SpringBootApplication(excludeName = {
+    "org.springframework.cloud.config.client.ConfigClientAutoConfiguration",
+    "org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration"
+})
+@ComponentScan(basePackages = "com.rslakra.retailsuite.ui")
 public class WebAppsServiceApplication {
 
     /**

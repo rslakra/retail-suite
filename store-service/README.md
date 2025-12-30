@@ -44,20 +44,20 @@ The **store-service** is a Spring Boot microservice that manages store data usin
    - Services can run without Eureka, but service discovery won't work
 
 4. **Config Server** (Optional)
-   - Default: `http://localhost:8888`
+   - Default: `http://user:password@localhost:8888`
    - Used for: Centralized configuration management
    - Services have local fallback configurations
+   - Configured via `CONFIG_SERVER_URI` environment variable
 
 ### Maven Dependencies
 
 - Spring Boot Starter Data MongoDB
 - Spring Boot Starter Data REST
 - Spring Boot Starter Batch (for data loading)
-- Spring Cloud Starter Config
-- Spring Cloud Starter Netflix Eureka Client
-- Spring Cloud Starter Bus AMQP (RabbitMQ)
 - H2 Database (for Spring Batch job repository)
-- Lombok
+- Spring Cloud Starter OpenFeign (test scope only)
+
+**Note**: Spring Cloud dependencies (Config, Eureka Client, Bus AMQP) are inherited from the parent POM.
 
 ---
 
@@ -145,7 +145,7 @@ export RABBITMQ_HOST=localhost
 export RABBITMQ_PORT=5672
 
 # Config Server (optional)
-export CONFIG_SERVER_URI=http://localhost:8888
+export CONFIG_SERVER_URI=http://user:password@localhost:8888
 ```
 
 ---
