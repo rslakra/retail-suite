@@ -29,7 +29,7 @@ The provided script uses Docker to run MongoDB:
 
 ```bash
 cd mongodb
-./startMongoDBService.sh
+./mongodb.sh --start
 ```
 
 This will:
@@ -80,7 +80,7 @@ volumes:
 **Using script:**
 ```bash
 cd mongodb
-./startMongoDBService.sh
+./mongodb.sh --start
 ```
 
 **Using Docker directly:**
@@ -100,7 +100,7 @@ brew services start mongodb-community
 **Using script:**
 ```bash
 cd mongodb
-./stopMongoDBService.sh
+./mongodb.sh --stop
 ```
 
 **Using Docker:**
@@ -458,14 +458,19 @@ docker exec -it mongodb mongorestore --db stores /backup/stores
 
 ## Quick Reference
 
-```bash
 # Start
-./startMongoDBService.sh
+./mongodb.sh --start
 
 # Stop
-./stopMongoDBService.sh
+./mongodb.sh --stop
 
-# Check status
+# Status
+./mongodb.sh --status
+
+# Restart
+./mongodb.sh --restart
+
+# Check status (Docker)
 docker ps | grep mongodb
 
 # View logs

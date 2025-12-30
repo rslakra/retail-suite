@@ -29,7 +29,7 @@ The provided script uses Docker to run RabbitMQ:
 
 ```bash
 cd rabbitmq
-./startRabbitMQServer.sh
+./rabbitmq.sh --start
 ```
 
 This will:
@@ -80,7 +80,7 @@ services:
 **Using script:**
 ```bash
 cd rabbitmq
-./startRabbitMQServer.sh
+./rabbitmq.sh --start
 ```
 
 **Using Docker directly:**
@@ -100,7 +100,7 @@ brew services start rabbitmq
 **Using script:**
 ```bash
 cd rabbitmq
-./stopRabbitMQServer.sh
+./rabbitmq.sh --stop
 ```
 
 **Using Docker:**
@@ -304,14 +304,19 @@ brew services stop rabbitmq
 
 ## Quick Reference
 
-```bash
 # Start
-./startRabbitMQServer.sh
+./rabbitmq.sh --start
 
 # Stop
-./stopRabbitMQServer.sh
+./rabbitmq.sh --stop
 
-# Check status
+# Status
+./rabbitmq.sh --status
+
+# Restart
+./rabbitmq.sh --restart
+
+# Check status (Docker)
 docker ps | grep rabbitmq
 
 # View logs

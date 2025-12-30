@@ -106,7 +106,7 @@ The build script creates:
 1. **Start RabbitMQ** (see [RabbitMQ README](../rabbitmq/README.md))
    ```bash
    cd ../rabbitmq
-   ./startRabbitMQServer.sh
+   ./rabbitmq.sh --start
    ```
 
 2. **Start Eureka Server** (optional, if using service discovery)

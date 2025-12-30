@@ -146,14 +146,14 @@ For detailed information about each service, see their respective README files:
 **RabbitMQ:**
 ```bash
 cd rabbitmq
-./startRabbitMQServer.sh
+./rabbitmq.sh --start
 ```
 See [RabbitMQ README](rabbitmq/README.md) for details.
 
 **MongoDB:**
 ```bash
 cd mongodb
-./startMongoDBService.sh
+./mongodb.sh --start
 ```
 See [MongoDB README](mongodb/README.md) for details.
 
@@ -369,12 +369,10 @@ retail-suite/
 │   └── runMaven.sh       # Run script
 ├── rabbitmq/             # RabbitMQ infrastructure
 │   ├── README.md         # RabbitMQ documentation
-│   ├── startRabbitMQServer.sh
-│   └── stopRabbitMQServer.sh
+│   └── rabbitmq.sh       # Unified RabbitMQ management script
 ├── mongodb/              # MongoDB infrastructure
 │   ├── README.md         # MongoDB documentation
-│   ├── startMongoDBService.sh
-│   └── stopMongoDBService.sh
+│   └── mongodb.sh        # Unified MongoDB management script
 └── pom.xml               # Parent POM
 ```
 
