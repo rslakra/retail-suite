@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GoogleMap, MapMarker } from '@angular/google-maps';
+import { GoogleMap, MapAdvancedMarker } from '@angular/google-maps';
 import { CustomerService } from '../../services/customer.service';
+import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
 import { Customer } from '../../models/customer.model';
 
 declare var google: any;
@@ -11,11 +12,14 @@ declare var google: any;
 @Component({
   selector: 'app-customer-add',
   standalone: false,
-  imports: [CommonModule, FormsModule, GoogleMap, MapMarker],
+  imports: [CommonModule, FormsModule, GoogleMap, MapAdvancedMarker],
   templateUrl: './customer-add.component.html',
   styleUrl: './customer-add.component.css'
 })
-export class CustomerAddComponent implements OnInit {
+export class CustomerAddComponent implements OnInit, AfterViewInit {
+  mapsReady = false;
+  mapsMessage: string | null = null;
+
   customer: Customer = {
     firstname: '',
     lastname: '',
@@ -40,11 +44,31 @@ export class CustomerAddComponent implements OnInit {
 
   constructor(
     private customerService: CustomerService,
-    private router: Router
+    private router: Router,
+    private googleMapsLoader: GoogleMapsLoaderService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.updateMapCenter();
+  }
+
+  ngAfterViewInit(): void {
+    this.initializeMaps();
+  }
+
+  private initializeMaps(): void {
+    this.googleMapsLoader.ensureLoaded()
+      .then(() => {
+        this.mapsReady = true;
+        this.mapsMessage = null;
+        this.cdr.detectChanges();
+      })
+      .catch((error: Error) => {
+        this.mapsReady = false;
+        this.mapsMessage = error.message;
+        this.cdr.detectChanges();
+      });
   }
 
   updateMapCenter(): void {
@@ -74,61 +98,65 @@ export class CustomerAddComponent implements OnInit {
   }
 
   geocodeAddress(): void {
-    const geocoder = new google.maps.Geocoder();
-    const address: string[] = [];
+    this.googleMapsLoader.runWhenReady(() => {
+      const geocoder = new google.maps.Geocoder();
+      const address: string[] = [];
 
-    if (this.customer.address.street) {
-      address.push(this.customer.address.street);
-    }
-    if (this.customer.address.city) {
-      address.push(this.customer.address.city);
-    }
-    if (this.customer.address.zipCode) {
-      address.push(this.customer.address.zipCode);
-    }
-
-    if (address.length === 0) {
-      alert('Please enter at least one address field');
-      return;
-    }
-
-    geocoder.geocode({ address: address.join(',') }, (results: any, status: any) => {
-      if (status === google.maps.GeocoderStatus.OK) {
-        this.customer.address.location.latitude = results[0].geometry.location.lat();
-        this.customer.address.location.longitude = results[0].geometry.location.lng();
-        this.updateMapCenter();
-      } else {
-        alert('Geocode was not successful for the following reason: ' + status);
+      if (this.customer.address.street) {
+        address.push(this.customer.address.street);
       }
-    });
+      if (this.customer.address.city) {
+        address.push(this.customer.address.city);
+      }
+      if (this.customer.address.zipCode) {
+        address.push(this.customer.address.zipCode);
+      }
+
+      if (address.length === 0) {
+        alert('Please enter at least one address field');
+        return;
+      }
+
+      geocoder.geocode({ address: address.join(',') }, (results: any, status: any) => {
+        if (status === google.maps.GeocoderStatus.OK) {
+          this.customer.address.location.latitude = results[0].geometry.location.lat();
+          this.customer.address.location.longitude = results[0].geometry.location.lng();
+          this.updateMapCenter();
+        } else {
+          alert('Geocode was not successful for the following reason: ' + status);
+        }
+      });
+    }, (message) => alert(message));
   }
 
   reverseGeocodeCoordinates(): void {
-    const geocoder = new google.maps.Geocoder();
-    const lat = parseFloat(this.customer.address.location.latitude.toString());
-    const lng = parseFloat(this.customer.address.location.longitude.toString());
-    const latlng = new google.maps.LatLng(lat, lng);
+    this.googleMapsLoader.runWhenReady(() => {
+      const geocoder = new google.maps.Geocoder();
+      const lat = parseFloat(this.customer.address.location.latitude.toString());
+      const lng = parseFloat(this.customer.address.location.longitude.toString());
+      const latlng = new google.maps.LatLng(lat, lng);
 
-    geocoder.geocode({ location: latlng }, (results: any, status: any) => {
-      if (status === google.maps.GeocoderStatus.OK && results[0]) {
-        results[0].address_components.forEach((component: any) => {
-          if (component.types.includes('locality')) {
-            this.customer.address.city = component.long_name;
-          }
-          if (component.types.includes('postal_code')) {
-            this.customer.address.zipCode = component.long_name;
-          }
-          if (component.types.includes('street_number')) {
-            this.customer.address.street = component.long_name + ' ';
-          }
-          if (component.types.includes('route')) {
-            this.customer.address.street = (this.customer.address.street || '') + component.long_name;
-          }
-        });
-      } else {
-        alert('Reverse Geocode was not successful for the following reason: ' + status);
-      }
-    });
+      geocoder.geocode({ location: latlng }, (results: any, status: any) => {
+        if (status === google.maps.GeocoderStatus.OK && results[0]) {
+          results[0].address_components.forEach((component: any) => {
+            if (component.types.includes('locality')) {
+              this.customer.address.city = component.long_name;
+            }
+            if (component.types.includes('postal_code')) {
+              this.customer.address.zipCode = component.long_name;
+            }
+            if (component.types.includes('street_number')) {
+              this.customer.address.street = component.long_name + ' ';
+            }
+            if (component.types.includes('route')) {
+              this.customer.address.street = (this.customer.address.street || '') + component.long_name;
+            }
+          });
+        } else {
+          alert('Reverse Geocode was not successful for the following reason: ' + status);
+        }
+      });
+    }, (message) => alert(message));
   }
 
   getMyLocation(): void {

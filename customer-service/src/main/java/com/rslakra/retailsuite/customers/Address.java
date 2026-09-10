@@ -4,24 +4,22 @@ package com.rslakra.retailsuite.customers;
 import jakarta.persistence.Embeddable;
 
 import lombok.AllArgsConstructor;
-import lombok.Value;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * @author Rohtash Lakra
  */
-@Value
-@Embeddable
+@Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
+@Embeddable
 public class Address {
 
-	private final String street, zipCode, city;
-	private final Location location;
-
-	protected Address() {
-
-		this.street = null;
-		this.zipCode = null;
-		this.city = null;
-		this.location = null;
-	}
+	private String street;
+	private String zipCode;
+	private String city;
+	private Location location;
 }

@@ -1,8 +1,11 @@
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const { AngularWebpackPlugin } = require('@ngtools/webpack');
+
+const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || '';
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
@@ -14,6 +17,9 @@ module.exports = (env, argv) => {
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: isProduction
+        ? 'scripts/[name].[contenthash].js'
+        : 'scripts/[name].js',
+      chunkFilename: isProduction
         ? 'scripts/[name].[contenthash].js'
         : 'scripts/[name].js',
       clean: true
@@ -113,6 +119,9 @@ module.exports = (env, argv) => {
       ]
     },
     plugins: [
+      new webpack.DefinePlugin({
+        GOOGLE_MAPS_API_KEY: JSON.stringify(googleMapsApiKey)
+      }),
       new AngularWebpackPlugin({
         tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
         jitMode: true,
@@ -136,7 +145,10 @@ module.exports = (env, argv) => {
           {
             from: path.resolve(__dirname, 'src/assets'),
             to: path.resolve(__dirname, 'dist/assets'),
-            noErrorOnMissing: true
+            noErrorOnMissing: true,
+            globOptions: {
+              ignore: ['**/fonts/**']
+            }
           }
         ]
       }),
@@ -168,32 +180,41 @@ module.exports = (env, argv) => {
           context: ['/api/customers'],
           target: 'http://localhost:8082',
           changeOrigin: true,
-          pathRewrite: {
-            '^/api/customers': '/customers'
-          }
+          pathRewrite: { '^/api/customers': '/customers' }
         },
         {
           context: ['/api/stores'],
           target: 'http://localhost:8081',
           changeOrigin: true,
-          pathRewrite: {
-            '^/api/stores': '/stores'
-          }
+          pathRewrite: { '^/api/stores': '/stores' }
         }
       ]
     },
     optimization: {
       splitChunks: {
         chunks: 'all',
+        maxInitialRequests: 25,
         cacheGroups: {
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true
+          },
           vendor: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendor',
+            chunks: 'initial',
             priority: 10,
             reuseExistingChunk: true
           }
         }
       }
+    },
+    performance: {
+      hints: isProduction ? 'warning' : false,
+      maxEntrypointSize: 2 * 1024 * 1024,
+      maxAssetSize: 512 * 1024,
+      assetFilter: (assetFilename) => !assetFilename.endsWith('.map')
     }
   };
 };

@@ -4,20 +4,20 @@ package com.rslakra.retailsuite.customers;
 import jakarta.persistence.Embeddable;
 
 import lombok.AllArgsConstructor;
-import lombok.Value;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * @author Rohtash Lakra
  */
-@Value
-@Embeddable
+@Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
+@Embeddable
 public class Location {
 
-	private final double latitude, longitude;
-
-	protected Location() {
-		this.latitude = 0.0;
-		this.longitude = 0.0;
-	}
+	private double latitude;
+	private double longitude;
 }
