@@ -34,7 +34,7 @@ See [rabbitmq/README.md](rabbitmq/README.md) and [mongodb/README.md](mongodb/REA
 
 **Optional:** Eureka Server and Config Server — services run without them using local `application.yml` defaults.
 
----
+**Optional:** Eureka Server and Config Server — services run without them using local `application.yml` defaults.
 
 ## Environment
 
@@ -47,8 +47,9 @@ See [rabbitmq/README.md](rabbitmq/README.md) and [mongodb/README.md](mongodb/REA
 | `MONGODB_PORT`           | `27017`                               | store-service                              |
 | `CONFIG_SERVER_URI`      | `http://user:password@localhost:8888` | customer-service, store-service (optional) |
 | `SPRING_PROFILES_ACTIVE` | `h2`                                  | customer-service (`mysql` for MySQL)       |
-| `CUSTOMER_SERVICE_URI`   | `http://localhost:8082`               | web-apps-ui                                |
-| `STORE_SERVICE_URI`      | `http://localhost:8081`               | web-apps-ui                                |
+| `CUSTOMER_SERVICE_URI`   | `http://localhost:8082`               | web-apps-ui (Spring Boot proxy)            |
+| `STORE_SERVICE_URI`      | `http://localhost:8081`               | web-apps-ui (Spring Boot proxy)            |
+| `GOOGLE_MAPS_API_KEY`    | *(unset)*                             | web-apps-ui frontend build / `npm start`   |
 
 
 Example:
@@ -59,6 +60,17 @@ export RABBITMQ_PORT=5672
 export MONGODB_HOST=localhost
 export MONGODB_PORT=27017
 ```
+
+**Google Maps (optional, for map/geocode on customer add/edit/search):**
+
+```bash
+cd web-apps-ui
+cp .env.example .env
+# set GOOGLE_MAPS_API_KEY in .env, then:
+npm start
+```
+
+Maps load at runtime when a key is set. Without a key, customer CRUD and nearby-store search still work; map panels show a configuration warning instead of console errors.
 
 Per-service configuration: `customer-service/src/main/resources/application.yml`, `store-service/src/main/resources/application.yml`, `web-apps-ui/src/main/resources/application.yml`.
 
@@ -82,13 +94,16 @@ cd store-service && ./buildMaven.sh
 cd web-apps-ui && ./buildMaven.sh
 ```
 
-**Frontend** (bundled into `web-apps-ui` static resources):
+**Frontend** (bundled into `web-apps-ui` static resources; **npm only** — no `yarn.lock`):
 
 ```bash
 cd web-apps-ui
 npm install
-npm run build
+npm run build          # production bundle → dist/
+./buildWebapp.sh       # or copy dist/ into src/main/resources/static/
 ```
+
+Set `GOOGLE_MAPS_API_KEY` in `web-apps-ui/.env` (or export it) before `npm run build` / `npm start` if you need maps.
 
 API, build options, and endpoint details: [customer-service/README.md](customer-service/README.md), [store-service/README.md](store-service/README.md), [web-apps-ui/README.md](web-apps-ui/README.md).
 
@@ -117,6 +132,17 @@ cd web-apps-ui && ./runMaven.sh
 - Frontend dev (hot reload): `cd web-apps-ui && npm start` → [http://localhost:9016](http://localhost:9016)
 
 Dev server proxies `/api/customers` → `8082` and `/api/stores` → `8081`.
+
+**UI workflow (dev server on `9016`)**
+
+| Page | URL | Notes |
+|------|-----|--------|
+| Customer list | `/customers` | List, add, edit, delete |
+| Add customer | `/customers/add` | Form + optional map |
+| Edit customer | `/customers/{id}/edit` | Save/cancel returns to `/customers` |
+| Search nearby stores | `/customers/{id}` | Enter distance (km) and optional name/city filter, then **Search Stores** |
+
+Nearby-store search calls **store-service** geospatial API (`/stores/search/findByAddressLocationNear`). **MongoDB** must be running with store data loaded.
 
 ### Docker
 
@@ -183,6 +209,9 @@ See service READMEs for coverage and test notes.
 | RabbitMQ connection           | RabbitMQ running (`./rabbitmq.sh --start`); see [rabbitmq/README.md](rabbitmq/README.md#troubleshooting)                                      |
 | Customer ↔ store integration  | store-service on `8081`; circuit breakers at [http://localhost:8082/actuator/circuitbreakers](http://localhost:8082/actuator/circuitbreakers) |
 | UI API errors                 | `CUSTOMER_SERVICE_URI` / `STORE_SERVICE_URI` in `web-apps-ui` `application.yml`; backends reachable                                           |
+| Customer update fails         | **customer-service** must be running; UI uses `PATCH` with `merge-patch+json` (not `PUT`) for customer updates                                 |
+| No nearby stores in search    | **store-service** on `8081`, **MongoDB** up; click **Search Stores** on `/customers/{id}` (results are not auto-loaded)                      |
+| Google Maps warnings          | Set `GOOGLE_MAPS_API_KEY` in `web-apps-ui/.env`; restart `npm start` / rebuild frontend                                                       |
 | Netty DNS warning (macOS, UI) | Non-critical; native resolver dependency is included in web-apps-ui                                                                           |
 
 
@@ -214,7 +243,7 @@ retail-suite/
 
 - **store-service** — Spring Data MongoDB (`stores` DB); Spring Cloud Bus (RabbitMQ); optional Eureka.
 - **customer-service** — Spring Data JPA (H2 file DB by default, MySQL optional); Resilience4j to **store-service**; Spring Cloud Bus; optional Eureka.
-- **web-apps-ui** — Spring Web MVC; `ApiProxyController` + RestTemplate; static Angular build on classpath.
+- **web-apps-ui** — Spring Web MVC; `ApiProxyController` + RestTemplate; Angular 21 + Webpack 5 static build on classpath. Dev: `webpack-dev-server` on `9016` proxies `/api/*` to backends.
 
 **Communication**
 
