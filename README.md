@@ -34,7 +34,7 @@ See [rabbitmq/README.md](rabbitmq/README.md) and [mongodb/README.md](mongodb/REA
 
 **Optional:** Eureka Server and Config Server — services run without them using local `application.yml` defaults.
 
-**Optional:** Eureka Server and Config Server — services run without them using local `application.yml` defaults.
+---
 
 ## Environment
 
