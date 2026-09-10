@@ -36,7 +36,7 @@ function ensureFrontendBuilt() {
         # Check Node.js prerequisites
         if ! command -v node &> /dev/null; then
             echo "ERROR: Node.js is not installed."
-            echo "       Please install Node.js >= 18.0.0 from https://nodejs.org/"
+            echo "       Please install Node.js >= 22.15.0 from https://nodejs.org/"
             exit 1
         fi
         
@@ -46,10 +46,11 @@ function ensureFrontendBuilt() {
             exit 1
         fi
         
-        # Check Node.js version
-        NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
-        if [ "$NODE_VERSION" -lt 18 ]; then
-            echo "ERROR: Node.js version must be >= 18.0.0"
+        # Check Node.js version (webpack-dev-server 6 requires >= 22.15.0)
+        NODE_MIN_VERSION="22.15.0"
+        NODE_CURRENT=$(node -v | sed 's/^v//')
+        if [ "$(printf '%s\n' "$NODE_MIN_VERSION" "$NODE_CURRENT" | sort -V | head -n1)" != "$NODE_MIN_VERSION" ]; then
+            echo "ERROR: Node.js version must be >= $NODE_MIN_VERSION"
             echo "       Current version: $(node -v)"
             exit 1
         fi
@@ -64,7 +65,7 @@ function ensureFrontendBuilt() {
         # Install NPM dependencies (if needed)
         if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
             echo "Installing NPM dependencies..."
-            npm install --legacy-peer-deps 2>&1 | grep -v "EBADENGINE\|vulnerabilities\|funding" || true
+            npm install 2>&1 | grep -v "EBADENGINE\|vulnerabilities\|funding" || true
             echo "✓ Dependencies installed"
         fi
         

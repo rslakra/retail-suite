@@ -13,7 +13,7 @@ echo
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
     echo "ERROR: Node.js is not installed."
-    echo "Please install Node.js >= 18.0.0 from https://nodejs.org/"
+    echo "Please install Node.js >= 22.15.0 from https://nodejs.org/"
     exit 1
 fi
 
@@ -24,10 +24,11 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
-# Check Node.js version
-NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
-if [ "$NODE_VERSION" -lt 18 ]; then
-    echo "ERROR: Node.js version must be >= 18.0.0"
+# Check Node.js version (webpack-dev-server 6 requires >= 22.15.0)
+NODE_MIN_VERSION="22.15.0"
+NODE_CURRENT=$(node -v | sed 's/^v//')
+if [ "$(printf '%s\n' "$NODE_MIN_VERSION" "$NODE_CURRENT" | sort -V | head -n1)" != "$NODE_MIN_VERSION" ]; then
+    echo "ERROR: Node.js version must be >= $NODE_MIN_VERSION"
     echo "Current version: $(node -v)"
     echo "Please upgrade Node.js: https://nodejs.org/"
     exit 1
@@ -35,8 +36,8 @@ fi
 
 # Check npm version
 NPM_VERSION=$(npm -v | cut -d'.' -f1)
-if [ "$NPM_VERSION" -lt 9 ]; then
-    echo "WARNING: npm version should be >= 9.0.0"
+if [ "$NPM_VERSION" -lt 10 ]; then
+    echo "WARNING: npm version should be >= 10.0.0"
     echo "Current version: $(npm -v)"
     echo "Consider upgrading npm: npm install -g npm@latest"
     echo
@@ -64,7 +65,7 @@ fi
 echo "Step 1: Installing NPM dependencies..."
 if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
     echo "Installing/updating dependencies..."
-    npm install --legacy-peer-deps
+    npm install
     echo "✓ Dependencies installed"
 else
     echo "✓ Dependencies already installed (node_modules exists and is up to date)"
@@ -106,11 +107,11 @@ else
     tail -50 /tmp/webpack_build.log
     echo
     echo "Troubleshooting:"
-    echo "1. Check Node.js version: node -v (must be >= 18.0.0)"
+    echo "1. Check Node.js version: node -v (must be >= 22.15.0)"
     echo "2. Check npm version: npm -v (should be >= 9.0.0)"
     echo "3. Try cleaning and reinstalling:"
     echo "   rm -rf node_modules package-lock.json"
-    echo "   npm install --legacy-peer-deps"
+    echo "   npm install"
     echo "4. Check webpack.config.js exists and is valid"
     echo "5. Review full build log: /tmp/webpack_build.log"
     exit 1

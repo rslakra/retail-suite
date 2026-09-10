@@ -2,21 +2,19 @@
 
 ## Overview
 
-The **web-apps-ui** is a Spring Boot microservice that serves as a gateway and frontend for the retail-suite application. It provides an **Angular 21**-based user interface and routes requests to the customer-service and store-service using Spring Cloud Gateway.
+The **web-apps-ui** is a Spring Boot microservice that serves the retail-suite frontend and proxies API calls to backend services. It provides an **Angular 21** user interface; `ApiProxyController` forwards `/api/customers/**` and `/api/stores/**` to customer-service and store-service.
 
 ## Key Features
 
 - **Angular 21** frontend with TypeScript for customer and store management
-- **Bootstrap 5.3.3** for modern, responsive UI components
-- Spring Cloud Gateway for routing to backend services
-- Service discovery via Eureka (optional)
-- Static resource serving
-- API gateway functionality
-- Webpack 5 for modern build tooling
-- Hot module replacement for development
-- Customer management (list, create, view details, delete)
-- Store management (list, view)
-- Google Maps integration for store locations
+- **Bootstrap 5** for responsive UI components
+- **ApiProxyController** (Spring Web MVC + RestTemplate) for backend routing on port `8083`
+- **Webpack dev server** on port `9016` with `/api/*` proxy to backends during development
+- Static resource serving from `src/main/resources/static/`
+- Webpack 5 build tooling; hot module replacement for development
+- Customer management (list, add, edit, view details, delete)
+- Nearby-store search on customer details (distance + optional name/city filter)
+- Optional **Google Maps** (geocode/map on add/edit; runtime load via `GOOGLE_MAPS_API_KEY`)
 
 ## Service Information
 
@@ -34,67 +32,63 @@ The **web-apps-ui** is a Spring Boot microservice that serves as a gateway and f
 
 ### Backend
 - **Spring Boot**: 3.5.7
-- **Spring Cloud Gateway**: 2024.0.0
+- **Spring Web MVC** (`spring-boot-starter-web`)
 - **Java**: 21
 
 ### Frontend
-- **Angular**: 21.0.6
-- **TypeScript**: 5.9.0
-- **Bootstrap**: 5.3.3
-- **RxJS**: 7.8.1
-- **Webpack**: 5.89.0
-- **Node.js**: >= 18.0.0
-- **npm**: >= 9.0.0
+- **Angular**: 21.2.x
+- **TypeScript**: 5.9.x
+- **Bootstrap**: 5.3.x
+- **RxJS**: 7.8.x
+- **Webpack**: 5.x
+- **webpack-dev-server**: 6.x
+- **Node.js**: >= 22.15.0 (required by webpack-dev-server 6)
+- **npm**: >= 10.0.0 (**npm only** — no `yarn.lock`)
 
 ## Dependencies
 
-### Infrastructure Services (Optional)
+### Backend Services (required for full functionality)
 
-1. **Eureka Server** (Optional)
-   - Used for: Service discovery and load balancing
-   - Services can run without Eureka, but load balancing won't work
-   - Gateway routes will fall back to direct URLs if Eureka is unavailable
-
-2. **Config Server** (Optional)
-   - Default: `http://localhost:8888`
-   - Used for: Centralized configuration management
-   - Service has local fallback configuration
-
-### Backend Services (Required for Full Functionality)
-
-- **customer-service**: Must be running on port 8082 (or discoverable via Eureka)
-- **store-service**: Must be running on port 8081 (or discoverable via Eureka)
+- **customer-service** on port `8082`
+- **store-service** on port `8081` (required for nearby-store search and store list)
 
 ### Maven Dependencies
 
-- Spring Boot Starter WebFlux
-- Spring Cloud Starter Gateway
-- Spring Cloud Starter Netflix Eureka Client
-- Spring Cloud Starter Config
+- Spring Boot Starter Web (`spring-boot-starter-web`)
 
-### Gateway Routes
+### API Proxy Routes
 
-The service uses Spring Cloud Gateway to route requests to backend services:
+`ApiProxyController` forwards requests from the Angular app to backend services:
 
-| Route           | Backend Service  | Description                           |
-|-----------------|------------------|---------------------------------------|
-| `/stores/**`    | store-service    | Routes to store-service               |
-| `/customers/**` | customer-service | Routes to customer-service            |
-| `/`             | Static           | Redirects to `/index.html#/customers` |
+| Route              | Backend Service  | Description                    |
+|--------------------|------------------|--------------------------------|
+| `/api/customers/**`| customer-service | Customer CRUD (Spring Data REST) |
+| `/api/stores/**`   | store-service    | Store list and geospatial search |
+| `/`, static assets | —                | Angular SPA from `classpath:/static/` |
 
-**Default Configuration (Direct URLs):**
-- `http://localhost:8081` - Direct route to store-service
-- `http://localhost:8082` - Direct route to customer-service
+**Default backend URLs** (in `application.yml`):
 
-**Using Eureka (Optional):**
-Update routes in `application.yml` to use `lb://store-service` or `lb://customer-service` for service discovery.
+- `http://localhost:8082` — customer-service
+- `http://localhost:8081` — store-service
 
-**Environment Variables:**
+**Webpack dev server** (`npm start`) uses the same `/api/*` paths and proxies to those ports (see `webpack.config.js`).
+
+**Environment variables:**
+
 ```bash
 export STORE_SERVICE_URI=http://localhost:8081
 export CUSTOMER_SERVICE_URI=http://localhost:8082
-export CONFIG_SERVER_URI=http://localhost:8888
 ```
+
+**Google Maps (optional):**
+
+```bash
+cd web-apps-ui
+cp .env.example .env
+# set GOOGLE_MAPS_API_KEY in .env, then npm start or npm run build
+```
+
+Maps load at runtime when a key is set. Without a key, customer CRUD and nearby-store search still work; map panels show a configuration warning.
 
 ## Build
 
@@ -105,8 +99,8 @@ export CONFIG_SERVER_URI=http://localhost:8888
 - Maven 3.6+
 
 **Frontend:**
-- Node.js >= 18.0.0
-- npm >= 9.0.0
+- Node.js >= 22.15.0
+- npm >= 10.0.0
 
 ### Build Backend
 
@@ -143,8 +137,6 @@ The build script creates:
 ```bash
 cd web-apps-ui
 npm install
-# or
-yarn install
 ```
 
 **Production build:**
@@ -174,8 +166,6 @@ npm run build:dev
 1. **Start backend services** (recommended):
    - Start customer-service (see [Customer Service README](../customer-service/README.md))
    - Start store-service (see [Store Service README](../store-service/README.md))
-
-2. **Start Eureka Server** (optional, for service discovery)
 
 ### Run Backend
 
@@ -211,11 +201,13 @@ cd web-apps-ui
 # Install dependencies (first time only)
 npm install
 
+# Optional: copy .env.example to .env and set GOOGLE_MAPS_API_KEY for maps
+
 # Start development server
 npm start
 # Opens http://localhost:9016 with auto-reload on file changes
-# Proxies /customers → http://localhost:8082
-# Proxies /stores → http://localhost:8081
+# Proxies /api/customers → http://localhost:8082/customers
+# Proxies /api/stores → http://localhost:8081/stores
 ```
 
 **Note**: The Webpack development server runs independently and can run simultaneously with the Spring Boot service on different ports if needed.
@@ -224,12 +216,20 @@ npm start
 
 Once the service is running:
 
-1. **Open browser**: `http://localhost:9016` (for npm start) or `http://localhost:8083` (for Spring Boot)
-2. The application will redirect to the customers page
-3. Use the UI to:
-   - View and manage customers
-   - View stores
-   - Search for stores near customers
+1. **Open browser**: `http://localhost:9016` (`npm start`) or `http://localhost:8083` (Spring Boot)
+2. The application loads the customers module at `/customers`
+
+**UI routes (dev server on `9016`):**
+
+| Page | URL | Notes |
+|------|-----|--------|
+| Customer list | `/customers` | List, add, edit, delete |
+| Add customer | `/customers/add` | Form + optional map |
+| Edit customer | `/customers/{id}/edit` | Updates via `PATCH` + `merge-patch+json`; save/cancel returns to `/customers` |
+| Search nearby stores | `/customers/{id}` | Enter distance (km) and optional name/city filter, then **Search Stores** |
+| Store list | `/stores` | View stores |
+
+Nearby-store search calls store-service (`/stores/search/findByAddressLocationNear`). Results are not auto-loaded — click **Search Stores**. MongoDB must be running with store data.
 
 ## Test
 
@@ -262,6 +262,9 @@ npm run lint
 ├── src/                              # The src folder
 │   └── main/                         # Main source directory
 │       ├── java/                     # Java source code
+│       │   └── .../controller/
+│       │       ├── ApiProxyController.java   # Proxies /api/customers, /api/stores
+│       │       └── HomeController.java       # SPA fallback routing
 │       ├── resources/                # Application resources
 │       │   ├── application.yml       # Application configuration file
 │       │   └── static/               # Built frontend files (populated by build process)
@@ -294,12 +297,18 @@ npm run lint
 │   │   ├── components/               # Angular components
 │   │   │   ├── customer-list/        # Customer list component
 │   │   │   ├── customer-add/         # Customer add component
-│   │   │   ├── customer-details/     # Customer details component
+│   │   │   ├── customer-edit/        # Customer edit component
+│   │   │   ├── customer-details/     # Customer details + nearby-store search
 │   │   │   ├── store-list/           # Store list component
 │   │   │   └── about/                # About component
+│   │   ├── features/                 # Lazy-loaded feature modules
+│   │   │   ├── customers/            # Customer routes (list, add, edit, details)
+│   │   │   ├── stores/               # Store routes
+│   │   │   └── about/                # About route
 │   │   ├── services/                 # Angular services
-│   │   │   ├── customer.service.ts   # Customer service for API communication
-│   │   │   └── store.service.ts      # Store service for API communication
+│   │   │   ├── customer.service.ts   # Customer API (PATCH merge-patch for updates)
+│   │   │   ├── store.service.ts      # Store API + geospatial search
+│   │   │   └── google-maps-loader.service.ts  # Runtime Google Maps script load
 │   │   ├── models/                   # TypeScript interfaces and models
 │   │   │   ├── customer.model.ts     # Customer data model
 │   │   │   └── store.model.ts        # Store data model
@@ -311,7 +320,9 @@ npm run lint
 │   ├── index.html                    # Main HTML template
 │   └── styles.css                    # Global CSS styles
 ├── package.json                      # NPM dependencies and scripts configuration
-├── webpack.config.js                 # Webpack build configuration
+├── webpack.config.js                 # Webpack build + dev-server proxy configuration
+├── .env.example                      # Template for GOOGLE_MAPS_API_KEY
+├── scripts/load-env.mjs              # Loads .env before webpack start/build
 ├── tsconfig.json                     # TypeScript compiler configuration
 └── README.md                         # This documentation file
 ```
@@ -329,7 +340,7 @@ npm run lint
 **Summary:**
 - **To run the service**: The `src/main/resources/static/` folder is automatically populated during the build process (`buildMaven.sh` or `runMaven.sh`)
 - **Important**: The `static/` folder should be **empty initially** (or only contain `.gitkeep`). The build scripts automatically copy the built frontend files from `dist/` to `static/` before Maven builds/runs
-- **To modify the frontend**: You need `src/`, `package.json`, `webpack.config.js`, `tsconfig.json`, and Node.js 18+/npm 9+
+- **To modify the frontend**: You need `src/`, `package.json`, `webpack.config.js`, `tsconfig.json`, and Node.js 22.15+/npm 10+
 
 ## Troubleshooting
 
@@ -344,29 +355,41 @@ lsof -i :8083
 
 ### Backend Services Not Found
 
-**If using Eureka:**
-- Verify Eureka server is running
-- Check service registration: `http://eureka-server:8761`
-- Verify customer-service and store-service are registered
-
-**If not using Eureka (default):**
-- The gateway uses direct URLs by default (`http://localhost:8081` for stores and `http://localhost:8082` for customers)
-- Ensure backend services are running on the default ports:
-  - Store service: `8081`
-  - Customer service: `8082`
-- Or set environment variables to override:
+- Ensure **customer-service** (`8082`) and **store-service** (`8081`) are running
+- Dev server proxies `/api/customers` and `/api/stores`; Spring Boot uses `ApiProxyController` on the same paths
+- Override URLs if needed:
   ```bash
   export STORE_SERVICE_URI=http://localhost:8081
   export CUSTOMER_SERVICE_URI=http://localhost:8082
   ```
 
-### Gateway Routes Not Working
+### API Proxy / Proxy Routes Not Working
 
 1. Verify backend services are running
-2. Check gateway logs for routing errors
-3. Test backend services directly:
+2. Check Spring Boot or webpack-dev-server logs for proxy errors
+3. Test backends directly:
    - `curl http://localhost:8082/customers`
    - `curl http://localhost:8081/stores`
+4. Test through the UI proxy:
+   - `curl http://localhost:8083/api/customers` (Spring Boot)
+   - `curl http://localhost:9016/api/customers` (dev server)
+
+### Customer Update Fails
+
+- UI uses **`PATCH`** with `Content-Type: application/merge-patch+json` (not `PUT`)
+- Ensure **customer-service** is running on `8082`
+
+### No Nearby Stores in Search
+
+- **store-service** must be on `8081`; **MongoDB** must be running with store data
+- On `/customers/{id}`, click **Search Stores** (results are not auto-loaded)
+- Set distance (km) and optional name/city filter before searching
+
+### Google Maps Warnings
+
+- Copy `.env.example` to `.env` and set `GOOGLE_MAPS_API_KEY`
+- Restart `npm start` or rebuild after changing the key
+- Maps are optional; CRUD and store search work without a key
 
 ### Static Resources Not Loading
 
@@ -388,7 +411,7 @@ rm -rf node_modules package-lock.json
 npm install
 
 # If stuck on dependency resolution:
-npm install --legacy-peer-deps
+npm install
 ```
 
 **Build Issues:**
@@ -400,8 +423,9 @@ npm run build 2>&1 | tee build.log
 npm list --depth=0
 
 # Common fixes:
-# - Ensure Node.js >= 18.0.0
-# - Ensure npm >= 9.0.0
+# - Ensure Node.js >= 22.15.0
+# - Ensure npm >= 10.0.0
+# - Use npm only (no yarn.lock)
 # - Clear node_modules and reinstall
 ```
 
@@ -453,7 +477,7 @@ docker run -p 8083:8083 \
 **✅ Completed Migrations:**
 
 1. **AngularJS → Angular 21** (Completed)
-   - Migrated from AngularJS 1.8.3 to Angular 21.0.6
+   - Migrated from AngularJS 1.8.3 to Angular 21
    - Converted JavaScript to TypeScript
    - Updated all components, services, and routing
    - Resolved all AngularJS security vulnerabilities
@@ -489,8 +513,8 @@ The migration to Angular 21 and Bootstrap 5 has resolved all known security vuln
 
 - ✅ **AngularJS vulnerabilities**: Eliminated by migrating to Angular 21
 - ✅ **Bootstrap 3 XSS vulnerabilities**: Eliminated by migrating to Bootstrap 5
-- ✅ **webpack-dev-server vulnerabilities**: Updated to 5.2.1
-- ✅ **Dependency vulnerabilities**: All critical and high-severity issues resolved
+- ✅ **webpack-dev-server vulnerabilities**: Updated to 6.x (requires Node.js 22.15+)
+- ✅ **Dependency vulnerabilities**: `npm audit` reports 0 vulnerabilities (overrides in `package.json`)
 
 **Security Best Practices:**
 1. **Input Validation**: Always validate and sanitize user inputs on the server side
@@ -510,14 +534,12 @@ These fixes are enforced via `overrides` and `resolutions` in `package.json` to 
 
 ### Additional Notes
 
-- The service has been upgraded to **Spring Boot 3.5.7** and **Spring Cloud 2024.0.0**
-- **Ribbon** and **Hystrix** configurations have been removed (deprecated in Spring Boot 3.x)
-- Spring Cloud Gateway now uses **Spring Cloud LoadBalancer** instead of Ribbon
-- The service can run without Eureka, but load balancing requires service discovery
-- Frontend is built with **Angular 21** and **TypeScript 5.9**
-- Frontend is pre-built and served as static resources
-- No unit tests are currently implemented
-- The old `app/` directory (AngularJS) is preserved for reference but is no longer used
+- Backend uses **Spring Boot 3.5.7** with **Spring Web MVC** (`ApiProxyController`), not Spring Cloud Gateway
+- Frontend is **Angular 21** + **TypeScript 5.9**, built with **Webpack 5** and **webpack-dev-server 6**
+- Frontend is pre-built and served as static resources (`buildMaven.sh` / `buildWebapp.sh` copy `dist/` → `static/`)
+- **npm only** for frontend dependencies (`engines`: Node >= 22.15.0, npm >= 10.0.0)
+- No backend unit tests; frontend Karma tests may need updates (legacy AngularJS references)
+- Legacy `app/` and `bower_components/` folders may remain on disk but are not used
 
 ### Related Services
 
