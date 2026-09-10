@@ -43,7 +43,7 @@ The **web-apps-ui** is a Spring Boot microservice that serves as a gateway and f
 - **Bootstrap**: 5.3.3
 - **RxJS**: 7.8.1
 - **Webpack**: 5.89.0
-- **Node.js**: >= 18.0.0
+- **Node.js**: >= 22.15.0
 - **npm**: >= 9.0.0
 
 ## Dependencies
@@ -105,7 +105,7 @@ export CONFIG_SERVER_URI=http://localhost:8888
 - Maven 3.6+
 
 **Frontend:**
-- Node.js >= 18.0.0
+- Node.js >= 22.15.0
 - npm >= 9.0.0
 
 ### Build Backend
@@ -143,8 +143,6 @@ The build script creates:
 ```bash
 cd web-apps-ui
 npm install
-# or
-yarn install
 ```
 
 **Production build:**
@@ -329,7 +327,7 @@ npm run lint
 **Summary:**
 - **To run the service**: The `src/main/resources/static/` folder is automatically populated during the build process (`buildMaven.sh` or `runMaven.sh`)
 - **Important**: The `static/` folder should be **empty initially** (or only contain `.gitkeep`). The build scripts automatically copy the built frontend files from `dist/` to `static/` before Maven builds/runs
-- **To modify the frontend**: You need `src/`, `package.json`, `webpack.config.js`, `tsconfig.json`, and Node.js 18+/npm 9+
+- **To modify the frontend**: You need `src/`, `package.json`, `webpack.config.js`, `tsconfig.json`, and Node.js 22.15+/npm 10+
 
 ## Troubleshooting
 
@@ -388,7 +386,7 @@ rm -rf node_modules package-lock.json
 npm install
 
 # If stuck on dependency resolution:
-npm install --legacy-peer-deps
+npm install
 ```
 
 **Build Issues:**
@@ -400,7 +398,7 @@ npm run build 2>&1 | tee build.log
 npm list --depth=0
 
 # Common fixes:
-# - Ensure Node.js >= 18.0.0
+# - Ensure Node.js >= 22.15.0
 # - Ensure npm >= 9.0.0
 # - Clear node_modules and reinstall
 ```
